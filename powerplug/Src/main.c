@@ -73,6 +73,27 @@ PUTCHAR_PROTOTYPE
     return ch;
 }	
 uint32_t               uwIC2Value1 = 0;
+uint32_t               uwIC2Value2 = 0;
+uint32_t               uwDiffCapture = 0;
+
+/* Capture index */
+uint16_t               uhCaptureIndex = 0;
+
+/* Frequency Value */
+//uint32_t               uwFrequency = 0;
+/* Private variables ---------------------------------------------------------*/
+/* Captured Value */
+uint16_t            uhIC2Value = 0;
+/* Duty Cycle Value */
+uint16_t            uhDutyCycle = 0;
+/* Frequency Value */
+uint32_t            uwFrequency = 0;
+
+/* Duty Cycle Value */
+uint16_t            uhDutyCycle2 = 0;
+/* Frequency Value */
+uint32_t            uwFrequency2 = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -116,6 +137,16 @@ int main(void)
     /* Starting Error */
     Error_Handler();
   }
+	if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2) != HAL_OK)
+  {
+    /* Starting Error */
+    Error_Handler();
+  }
+	if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3) != HAL_OK)
+  {
+    /* Starting Error */
+    Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -125,19 +156,17 @@ int main(void)
 
   /* USER CODE END WHILE */
 
-	/* USER CODE BEGIN 3 */
-		HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_SET);
-	printf("set\r\n");	
-  HAL_Delay(1000);
-	HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_RESET);
-	printf("reset\r\n");	
-  HAL_Delay(1000);
-  	printf("1\r\n");
+  /* USER CODE BEGIN 3 */
+		//printf("PA8 CF1 voltage freq=%d\r\n",uwIC2Value1);
+		printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
+		//HAL_Delay(1000);
+		//printf("PA10 CF power   freq=%d\r\n",uwIC2Value2);
+		printf("PA10 CF power uwFrequency2=%d\r\n",uwFrequency2);
 		HAL_Delay(1000);
-		printf("0\r\n");
+		uwFrequency=0;uwFrequency2=0;
 		HAL_Delay(1000);
-		printf("uwIC2Value1=%d\r\n",uwIC2Value1);
-
+		
+		printf("\r\n\r\n");
   }
   /* USER CODE END 3 */
 
@@ -247,6 +276,24 @@ static void MX_TIM1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
+  sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
 }
 
 /* USART2 init function */
@@ -298,12 +345,39 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
 	{
 		uwIC2Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-		
+		if(uwIC2Value1!=0)
+		{
+			/* Duty cycle computation */
+      uhDutyCycle = ((HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2)) * 100) / uwIC2Value1;
+      /* uwFrequency computation
+      //TIM4 counter clock = (RCC_Clocks.HCLK_Frequency)/2 */      
+      uwFrequency = (HAL_RCC_GetHCLKFreq())/2 / uwIC2Value1;
+		}
+		else
+		{
+			uhDutyCycle = 0;
+      uwFrequency = 0;
+		}
+	}
+	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
+	{
+		uwIC2Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
+		if(uwIC2Value2!=0)
+		{
+			uhDutyCycle2=((HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2)) * 100) / uwIC2Value2;
+			uwFrequency2=(HAL_RCC_GetHCLKFreq())/2 / uwIC2Value2;
+		}
+		else
+		{
+			uhDutyCycle2 = 0;
+      uwFrequency2 = 0;
+		}
 	}
 }
 /* USER CODE END 4 */
