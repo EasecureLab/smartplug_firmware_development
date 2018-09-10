@@ -48,6 +48,7 @@
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -59,6 +60,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_USART3_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -93,7 +95,7 @@ uint32_t            uwFrequency = 0;
 uint16_t            uhDutyCycle2 = 0;
 /* Frequency Value */
 uint32_t            uwFrequency2 = 0;
-
+uint8_t             temp_ch=0x55;
 /* USER CODE END 0 */
 
 /**
@@ -127,6 +129,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_TIM1_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 	printf("sichuan university wsn lab\r\n");
 	printf("project powerplug v1.0\r\n");
@@ -157,6 +160,7 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+		HAL_UART_Transmit(&huart3, (uint8_t *)&temp_ch, 1, 0xFFFF);
 		//printf("PA8 CF1 voltage freq=%d\r\n",uwIC2Value1);
 		printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
 		//HAL_Delay(1000);
@@ -309,6 +313,25 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
+/* USART3 init function */
+static void MX_USART3_UART_Init(void)
+{
+
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
