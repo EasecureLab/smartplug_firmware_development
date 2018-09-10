@@ -160,7 +160,8 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		HAL_UART_Transmit(&huart3, (uint8_t *)&temp_ch, 1, 0xFFFF);
+		//HAL_UART_Transmit(&huart3, (uint8_t *)&temp_ch, 1, 0xFFFF);
+		HAL_UART_Transmit(&huart3, "hello\r\n", 8, 0xFFFF);
 		//printf("PA8 CF1 voltage freq=%d\r\n",uwIC2Value1);
 		printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
 		//HAL_Delay(1000);
