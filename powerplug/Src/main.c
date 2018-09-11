@@ -209,14 +209,14 @@ int main(void)
 	NET_DEVICE_SendCmd("67890\r\n", "OK", 1); 
 
   send_count++;
-		HAL_Delay(10);
-  if(send_count>100)
+		HAL_Delay(5);
+  if(send_count>2)
   {
     send_count=0;
     printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
     printf("PA10 CF power  uwFrequency2=%d\r\n",uwFrequency2);
     uwFrequency=0;uwFrequency2=0;
-    HAL_Delay(1000);
+    HAL_Delay(5);
     printf("\r\n");
   }
 

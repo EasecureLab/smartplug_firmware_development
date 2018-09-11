@@ -1,0 +1,2 @@
+---- strstr Matches (1 in 1 files) ----
+Main.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug\src):		if(strstr()!=NULL)
