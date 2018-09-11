@@ -104,7 +104,22 @@ uint8_t  usart3_tx_buffer[128];
 uint16_t usart3_tx_len = 0;
 uint16_t send_count=0;
 
-
+_Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
+{
+	unsigned char timeOut = 200;
+	//dma_send(ptr, len1);
+	//NET_IO_Send((unsigned char *)cmd, strlen((const char *)cmd));	//Ð´ÃüÁîµ½ÍøÂçÉè±¸
+	dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+	while(timeOut--)
+	{
+		if(strstr(usart3_tx_buffer,res)!=NULL)
+		{
+			return 0;
+		}
+		HAL_Delay(10);
+	}
+	return 1;
+}
 /* USER CODE END 0 */
 
 /**
@@ -166,7 +181,18 @@ int main(void)
     Error_Handler();
   //enable uart3 idle interrupt
   __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
-	
+
+  
+	NET_DEVICE_SendCmd("AT+CWMODE_DEF=1\r\n", "OK", 1); 
+
+	NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN405\",\"wsn405405\"\r\n", "OK", 1); 
+	HAL_Delay(3000);
+	NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1); 
+
+	NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
+
+	NET_DEVICE_SendCmd("abcdef\r\n", "OK", 1); 
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -177,9 +203,14 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		
+	NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
+	NET_DEVICE_SendCmd("12345\r\n", "OK", 1); 
+	NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
+	NET_DEVICE_SendCmd("67890\r\n", "OK", 1); 
+
   send_count++;
-  if(send_count>300)
+		HAL_Delay(10);
+  if(send_count>100)
   {
     send_count=0;
     printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
@@ -192,7 +223,8 @@ int main(void)
   if(usart3_rx_flag==1)
   {
     usart3_rx_flag=0;
-    send_data_to_esp8266("Received:%s\r\n",usart3_tx_buffer);
+    //send_data_to_esp8266("Received:%s\r\n",usart3_tx_buffer);
+		memset(usart3_tx_buffer,0x00,128);
   }
 	
   }
