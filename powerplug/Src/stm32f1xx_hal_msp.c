@@ -346,7 +346,7 @@ void dma_send(unsigned char *buffer,unsigned int length)
 uint8_t len1 = 0;
 #define LEN 128
 uint8_t send_to_NB[LEN];
-uint8_t send_data_to_esp8266(uint8_t NB_CMD, char *fmt, ...)
+uint8_t send_data_to_esp8266(char *fmt, ...)
 {
     char *ptr = (char *)send_to_NB;
     va_list ap;
@@ -354,8 +354,7 @@ uint8_t send_data_to_esp8266(uint8_t NB_CMD, char *fmt, ...)
     len1 = vsprintf(ptr, fmt, ap);
     va_end(ap);
 
-    //send data to nb via usart2 dma
-    //printf("cmd2nb:%s\r\n", ptr);
+    //send data to nb via usart3 dma
     dma_send(ptr, len1);
     return 1;
 }

@@ -71,23 +71,20 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-extern uint8_t send_data_to_esp8266(uint8_t NB_CMD, char *fmt, ...);
+extern uint8_t send_data_to_esp8266(char *fmt, ...);
 	
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 PUTCHAR_PROTOTYPE
 {
     HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
     return ch;
-}	
+}
+
 uint32_t               uwIC2Value1 = 0;
 uint32_t               uwIC2Value2 = 0;
 uint32_t               uwDiffCapture = 0;
 
-/* Capture index */
-uint16_t               uhCaptureIndex = 0;
 
-/* Frequency Value */
-//uint32_t               uwFrequency = 0;
 /* Private variables ---------------------------------------------------------*/
 /* Captured Value */
 uint16_t            uhIC2Value = 0;
@@ -95,7 +92,6 @@ uint16_t            uhIC2Value = 0;
 uint16_t            uhDutyCycle = 0;
 /* Frequency Value */
 uint32_t            uwFrequency = 0;
-
 /* Duty Cycle Value */
 uint16_t            uhDutyCycle2 = 0;
 /* Frequency Value */
@@ -107,6 +103,8 @@ uint8_t  usart3_rx_buffer[128];
 uint8_t  usart3_tx_buffer[128];
 uint16_t usart3_tx_len = 0;
 uint16_t send_count=0;
+
+
 /* USER CODE END 0 */
 
 /**
@@ -143,30 +141,32 @@ int main(void)
   MX_TIM1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-	printf("sichuan university wsn lab\r\n");
-	printf("project powerplug v1.0\r\n");
-	printf("compile date: %s %s\r\n",__DATE__,__TIME__);
-	
-	if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1) != HAL_OK)
+  printf("sichuan university wsn lab\r\n");
+  printf("project powerplug v1.0\r\n");
+  printf("compile date: %s %s\r\n",__DATE__,__TIME__);
+
+  if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1) != HAL_OK)
   {
     /* Starting Error */
     Error_Handler();
   }
-	if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2) != HAL_OK)
+  if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2) != HAL_OK)
   {
     /* Starting Error */
     Error_Handler();
   }
-	if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3) != HAL_OK)
+  if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3) != HAL_OK)
   {
     /* Starting Error */
     Error_Handler();
   }
-	
-	if(HAL_UART_Receive_DMA(&huart3,(uint8_t *)&usart3_rx_buffer,128) != HAL_OK)    
-			Error_Handler();
   
-	dma_send("test3\r\n",8);  
+  //uart3 receive dma wifi at command
+  if(HAL_UART_Receive_DMA(&huart3,(uint8_t *)&usart3_rx_buffer,128) != HAL_OK)    
+    Error_Handler();
+  //enable uart3 idle interrupt
+  __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -178,24 +178,22 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 		
-		send_count++;
-		if(send_count>300)
-		{
-			send_count=0;
-			dma_send("12345\r\n",8);
-			printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
-			printf("PA10 CF power uwFrequency2=%d\r\n",uwFrequency2);
-			uwFrequency=0;uwFrequency2=0;
-			HAL_Delay(1000);
-		
-			printf("\r\n");
-		}
-		//send_data_to_esp8266(2,"PA8 CF1 voltage uwFrequency\r\n");
-		if(usart3_rx_flag==1)
-		{
-			usart3_rx_flag=0;
-			dma_send("u3rxd\r\n",8);
-		}
+  send_count++;
+  if(send_count>300)
+  {
+    send_count=0;
+    printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
+    printf("PA10 CF power  uwFrequency2=%d\r\n",uwFrequency2);
+    uwFrequency=0;uwFrequency2=0;
+    HAL_Delay(1000);
+    printf("\r\n");
+  }
+
+  if(usart3_rx_flag==1)
+  {
+    usart3_rx_flag=0;
+    send_data_to_esp8266("Received:%s\r\n",usart3_tx_buffer);
+  }
 	
   }
   /* USER CODE END 3 */
