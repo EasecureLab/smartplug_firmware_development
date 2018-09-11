@@ -49,6 +49,8 @@ TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart3_rx;
+DMA_HandleTypeDef hdma_usart3_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -58,6 +60,7 @@ UART_HandleTypeDef huart3;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART3_UART_Init(void);
@@ -68,6 +71,8 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+extern uint8_t send_data_to_esp8266(uint8_t NB_CMD, char *fmt, ...);
+	
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 PUTCHAR_PROTOTYPE
 {
@@ -96,6 +101,12 @@ uint16_t            uhDutyCycle2 = 0;
 /* Frequency Value */
 uint32_t            uwFrequency2 = 0;
 uint8_t             temp_ch=0x55;
+
+uint8_t  usart3_rx_flag = 0;
+uint8_t  usart3_rx_buffer[128];
+uint8_t  usart3_tx_buffer[128];
+uint16_t usart3_tx_len = 0;
+uint16_t send_count=0;
 /* USER CODE END 0 */
 
 /**
@@ -127,6 +138,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM1_Init();
   MX_USART3_UART_Init();
@@ -150,6 +162,11 @@ int main(void)
     /* Starting Error */
     Error_Handler();
   }
+	
+	if(HAL_UART_Receive_DMA(&huart3,(uint8_t *)&usart3_rx_buffer,128) != HAL_OK)    
+			Error_Handler();
+  
+	dma_send("test3\r\n",8);  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -160,18 +177,26 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		//HAL_UART_Transmit(&huart3, (uint8_t *)&temp_ch, 1, 0xFFFF);
-		HAL_UART_Transmit(&huart3, "hello\r\n", 8, 0xFFFF);
-		//printf("PA8 CF1 voltage freq=%d\r\n",uwIC2Value1);
-		printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
-		//HAL_Delay(1000);
-		//printf("PA10 CF power   freq=%d\r\n",uwIC2Value2);
-		printf("PA10 CF power uwFrequency2=%d\r\n",uwFrequency2);
-		HAL_Delay(1000);
-		uwFrequency=0;uwFrequency2=0;
-		HAL_Delay(1000);
 		
-		printf("\r\n\r\n");
+		send_count++;
+		if(send_count>300)
+		{
+			send_count=0;
+			dma_send("12345\r\n",8);
+			printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
+			printf("PA10 CF power uwFrequency2=%d\r\n",uwFrequency2);
+			uwFrequency=0;uwFrequency2=0;
+			HAL_Delay(1000);
+		
+			printf("\r\n");
+		}
+		//send_data_to_esp8266(2,"PA8 CF1 voltage uwFrequency\r\n");
+		if(usart3_rx_flag==1)
+		{
+			usart3_rx_flag=0;
+			dma_send("u3rxd\r\n",8);
+		}
+	
   }
   /* USER CODE END 3 */
 
@@ -336,6 +361,24 @@ static void MX_USART3_UART_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 

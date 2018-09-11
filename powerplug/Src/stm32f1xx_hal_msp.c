@@ -39,9 +39,21 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
+extern DMA_HandleTypeDef hdma_usart3_rx;
+
+extern DMA_HandleTypeDef hdma_usart3_tx;
+
 extern void _Error_Handler(char *, int);
 /* USER CODE BEGIN 0 */
+#include "string.h"
+#include <stdarg.h>
+#include <stdio.h>
 
+extern UART_HandleTypeDef huart3;
+extern uint8_t usart3_rx_flag;
+extern uint8_t usart3_rx_buffer[128];
+extern uint8_t usart3_tx_buffer[128];
+extern uint16_t usart3_tx_len;
 /* USER CODE END 0 */
 /**
   * Initializes the Global MSP.
@@ -200,6 +212,42 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* USART3 DMA Init */
+    /* USART3_RX Init */
+    hdma_usart3_rx.Instance = DMA1_Channel3;
+    hdma_usart3_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_usart3_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart3_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart3_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart3_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart3_rx.Init.Mode = DMA_NORMAL;
+    hdma_usart3_rx.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_usart3_rx) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    __HAL_LINKDMA(huart,hdmarx,hdma_usart3_rx);
+
+    /* USART3_TX Init */
+    hdma_usart3_tx.Instance = DMA1_Channel2;
+    hdma_usart3_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_usart3_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart3_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart3_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart3_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart3_tx.Init.Mode = DMA_NORMAL;
+    hdma_usart3_tx.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_usart3_tx) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    __HAL_LINKDMA(huart,hdmatx,hdma_usart3_tx);
+
+    /* USART3 interrupt Init */
+    HAL_NVIC_SetPriority(USART3_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART3_IRQn);
   /* USER CODE BEGIN USART3_MspInit 1 */
 
   /* USER CODE END USART3_MspInit 1 */
@@ -242,6 +290,12 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
 
+    /* USART3 DMA DeInit */
+    HAL_DMA_DeInit(huart->hdmarx);
+    HAL_DMA_DeInit(huart->hdmatx);
+
+    /* USART3 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(USART3_IRQn);
   /* USER CODE BEGIN USART3_MspDeInit 1 */
 
   /* USER CODE END USART3_MspDeInit 1 */
@@ -250,7 +304,61 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 }
 
 /* USER CODE BEGIN 1 */
+void UsartReceive_IDLE(UART_HandleTypeDef *huart)  
+{
+    uint16_t i = 0;
+    
+    if((__HAL_UART_GET_FLAG(huart,UART_FLAG_IDLE) != RESET))  
+    {
+        if(huart->Instance == USART3)
+        {
+            __HAL_UART_CLEAR_IDLEFLAG(huart);
+            i = huart->Instance->SR;
+            i = huart->Instance->DR;
+            i = hdma_usart3_rx.Instance->CNDTR;
+            HAL_UART_DMAStop(huart);
+            
+            /* handle data*/
+            if(usart3_rx_flag == 0)
+            {
+                usart3_tx_len = 128 - i;
+                memcpy(usart3_tx_buffer,usart3_rx_buffer,usart3_tx_len);
+                usart3_rx_flag = 1;
+            }
+            
+            /* clear buffer then receive again*/
+            memset(usart3_rx_buffer,0x00,128);
+            HAL_UART_Receive_DMA(huart,(uint8_t *)&usart3_rx_buffer,128);
+        }
+    }
+}  
+void dma_send(unsigned char *buffer,unsigned int length)
+{
+    //
+    while(HAL_DMA_GetState(&hdma_usart3_tx) == HAL_DMA_STATE_BUSY);
 
+    /*  */
+    __HAL_DMA_DISABLE(&hdma_usart3_tx);
+
+    //
+    HAL_UART_Transmit_DMA(&huart3,buffer,length);
+}
+uint8_t len1 = 0;
+#define LEN 128
+uint8_t send_to_NB[LEN];
+uint8_t send_data_to_esp8266(uint8_t NB_CMD, char *fmt, ...)
+{
+    char *ptr = (char *)send_to_NB;
+    va_list ap;
+    va_start(ap, fmt);
+    len1 = vsprintf(ptr, fmt, ap);
+    va_end(ap);
+
+    //send data to nb via usart2 dma
+    //printf("cmd2nb:%s\r\n", ptr);
+    dma_send(ptr, len1);
+    return 1;
+}
 /* USER CODE END 1 */
 
 /**
