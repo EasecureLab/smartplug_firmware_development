@@ -110,15 +110,65 @@ _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
 	//dma_send(ptr, len1);
 	//NET_IO_Send((unsigned char *)cmd, strlen((const char *)cmd));	//Ð´ÃüÁîµ½ÍøÂçÉè±¸
 	dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+	printf("%s\r\n",cmd);
 	while(timeOut--)
 	{
 		if(strstr(usart3_tx_buffer,res)!=NULL)
 		{
+			
 			return 0;
 		}
 		HAL_Delay(10);
 	}
 	return 1;
+}
+
+char thousand_char;
+char hundred_char;
+char deci_char;
+char last_char;
+char value2str[10];
+void value2string(int value)
+{
+	//char temp_str[128];
+	int temp_value;
+	if(value/10000!=0)
+	{
+		return ;
+	}
+	else if(value/10000==0)//below 10000
+	{
+		thousand_char=value/1000+0x30;//thousand
+		temp_value=value%1000; // hundred deci etc
+		
+		if(temp_value/100!=0)
+		{
+			hundred_char=temp_value/100+0x30;
+		}
+		else if(temp_value/100==0)
+		{
+			hundred_char=0x30;
+		}
+		temp_value=value%100; //deci etc;
+		
+		if(temp_value/10!=0)
+		{
+			deci_char=temp_value/10+0x30;
+		}
+		else if(temp_value/10==0)
+		{
+			deci_char=0x30;
+		}
+		last_char=value%10+0x30;
+	}
+	
+	value2str[0]=thousand_char;
+	value2str[1]=hundred_char;
+	value2str[2]=deci_char;
+	value2str[3]=last_char;
+	value2str[4]='\0';
+	
+	
 }
 /* USER CODE END 0 */
 
@@ -189,9 +239,9 @@ int main(void)
 	HAL_Delay(3000);
 	NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1); 
 
-	NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
+	NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1); 
 
-	NET_DEVICE_SendCmd("abcdef\r\n", "OK", 1); 
+	NET_DEVICE_SendCmd("abcde\r\n", "OK", 1); 
 
   /* USER CODE END 2 */
 
@@ -203,29 +253,32 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
-	NET_DEVICE_SendCmd("12345\r\n", "OK", 1); 
-	NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
-	NET_DEVICE_SendCmd("67890\r\n", "OK", 1); 
-
-  send_count++;
-		HAL_Delay(5);
-  if(send_count>2)
-  {
-    send_count=0;
-    printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
-    printf("PA10 CF power  uwFrequency2=%d\r\n",uwFrequency2);
-    uwFrequency=0;uwFrequency2=0;
-    HAL_Delay(5);
-    printf("\r\n");
-  }
-
-  if(usart3_rx_flag==1)
-  {
-    usart3_rx_flag=0;
-    //send_data_to_esp8266("Received:%s\r\n",usart3_tx_buffer);
-		memset(usart3_tx_buffer,0x00,128);
-  }
+		NET_DEVICE_SendCmd("AT+CIPSEND=9\r\n", "OK", 1); 
+		NET_DEVICE_SendCmd("\r\n12345\r\n", "OK", 1); 
+		NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
+		//NET_DEVICE_SendCmd("67890\r\n", "OK", 1); 
+		dma_send(value2str, 5);
+		HAL_Delay(2000);
+		
+		send_count++;
+			HAL_Delay(5);
+		if(send_count>=1)
+		{
+			send_count=0;
+			printf("PA8 CF1 voltage uwFrequency=%d\r\n",uwFrequency);
+			printf("PA10 CF power  uwFrequency2=%d\r\n",uwFrequency2);
+			uwFrequency=0;uwFrequency2=0;
+			HAL_Delay(5);
+			printf("\r\n");
+		}
+		value2string(uwFrequency);
+		#if 0
+		if(usart3_rx_flag==1)
+		{
+			usart3_rx_flag=0;
+			memset(usart3_tx_buffer,0x00,128);
+		}
+		#endif
 	
   }
   /* USER CODE END 3 */
