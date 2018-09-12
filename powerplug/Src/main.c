@@ -166,7 +166,9 @@ void value2string(int value)
 	value2str[1]=hundred_char;
 	value2str[2]=deci_char;
 	value2str[3]=last_char;
-	value2str[4]='\0';
+	value2str[4]='\r';
+	value2str[5]='\n';
+	value2str[6]='\0';
 	
 	
 }
@@ -253,11 +255,11 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		NET_DEVICE_SendCmd("AT+CIPSEND=9\r\n", "OK", 1); 
-		NET_DEVICE_SendCmd("\r\n12345\r\n", "OK", 1); 
-		NET_DEVICE_SendCmd("AT+CIPSEND=5\r\n", "OK", 1); 
+		//NET_DEVICE_SendCmd("AT+CIPSEND=9\r\n", "OK", 1); 
+		//NET_DEVICE_SendCmd("\r\n12345\r\n", "OK", 1); 
+		NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1); 
 		//NET_DEVICE_SendCmd("67890\r\n", "OK", 1); 
-		dma_send(value2str, 5);
+		dma_send(value2str, 7);
 		HAL_Delay(2000);
 		
 		send_count++;
