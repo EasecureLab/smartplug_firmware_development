@@ -166,8 +166,10 @@ void value2string(int value)
 	value2str[1]=hundred_char;
 	value2str[2]=deci_char;
 	value2str[3]=last_char;
-	value2str[4]='\r';
-	value2str[5]='\n';
+	value2str[4]=' ';
+	value2str[5]=' ';
+	//value2str[4]='\r';
+	//value2str[5]='\n';
 	value2str[6]='\0';
 	
 	
@@ -229,20 +231,24 @@ int main(void)
   }
   
   //uart3 receive dma wifi at command
-  if(HAL_UART_Receive_DMA(&huart3,(uint8_t *)&usart3_rx_buffer,128) != HAL_OK)    
+  if(HAL_UART_Receive_DMA(&huart3,(uint8_t *)&usart3_rx_buffer,128) != HAL_OK) 
+	{		
     Error_Handler();
-  //enable uart3 idle interrupt
+	}
+	
+	//enable uart3 idle interrupt
   __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
-
-  
+	//CWMODE_DEF =1
 	NET_DEVICE_SendCmd("AT+CWMODE_DEF=1\r\n", "OK", 1); 
-
+	//CWJAP
 	NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN405\",\"wsn405405\"\r\n", "OK", 1); 
+	//NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1); 
 	HAL_Delay(3000);
-	NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1); 
-
+	//NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1); 
+	NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.244\",1234\r\n", "OK", 1); 
+	//the length of data which be sent
 	NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1); 
-
+  //the data content
 	NET_DEVICE_SendCmd("abcde\r\n", "OK", 1); 
 
   /* USER CODE END 2 */
@@ -255,15 +261,14 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		//NET_DEVICE_SendCmd("AT+CIPSEND=9\r\n", "OK", 1); 
-		//NET_DEVICE_SendCmd("\r\n12345\r\n", "OK", 1); 
 		NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1); 
 		//NET_DEVICE_SendCmd("67890\r\n", "OK", 1); 
+		//the data content 
 		dma_send(value2str, 7);
-		HAL_Delay(2000);
+		HAL_Delay(200);
 		
 		send_count++;
-			HAL_Delay(5);
+		HAL_Delay(5);
 		if(send_count>=1)
 		{
 			send_count=0;
@@ -274,14 +279,14 @@ int main(void)
 			printf("\r\n");
 		}
 		value2string(uwFrequency);
-		#if 0
+		
 		if(usart3_rx_flag==1)
 		{
 			usart3_rx_flag=0;
+			printf("Received:%s\r\n",usart3_tx_buffer);
 			memset(usart3_tx_buffer,0x00,128);
 		}
-		#endif
-	
+		
   }
   /* USER CODE END 3 */
 
