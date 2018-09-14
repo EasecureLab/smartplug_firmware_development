@@ -6,7 +6,7 @@
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether
+  * USER CODE END. Other portions of this file, whether 
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
@@ -130,11 +130,11 @@ _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
   printf("Sent:%s\r\n", cmd);
   while (timeOut--)
   {
-    if (usart3_rx_flag == 1)
-    {
-      usart3_rx_flag = 0;
-      printf("Received:%s\r\n", usart3_tx_buffer);
-    }
+    //if (usart3_rx_flag == 1)
+    //{
+    //  usart3_rx_flag = 0;
+    //  printf("Received:%s\r\n", usart3_tx_buffer);
+    //}
     if (strstr(usart3_tx_buffer, res) != NULL)
     {
 
@@ -299,28 +299,28 @@ int main(void)
   while (1)
   {
 
-    /* USER CODE END WHILE */
+  /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+  /* USER CODE BEGIN 3 */
 
     NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
     //NET_DEVICE_SendCmd("67890\r\n", "OK", 1);
     //the data content
     dma_send(value2str, 7);
-    HAL_Delay(1000);
+    HAL_Delay(10);
 
-    send_count++;
-    HAL_Delay(5);
-    if (send_count >= 1)
-    {
-      send_count = 0;
-      printf("PA8 CF1 voltage uwFrequency=%d\r\n", uwFrequency);
-      printf("PA10 CF power  uwFrequency2=%d\r\n", uwFrequency2);
-      uwFrequency = 0;
-      uwFrequency2 = 0;
-      HAL_Delay(5);
-      printf("\r\n");
-    }
+    //send_count++;
+    //HAL_Delay(5);
+    //if (send_count >= 1)
+    //{
+    //  send_count = 0;
+    //  printf("PA8 CF1 voltage uwFrequency=%d\r\n", uwFrequency);
+    //  printf("PA10 CF power  uwFrequency2=%d\r\n", uwFrequency2);
+    //  uwFrequency = 0;
+    //  uwFrequency2 = 0;
+    //  HAL_Delay(5);
+    //  printf("\r\n");
+    //}
     //value2string(uwFrequency);
     value2string((int)voltage_int);
 
@@ -375,8 +375,8 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-  /**Initializes the CPU, AHB and APB busses clocks
-  */
+    /**Initializes the CPU, AHB and APB busses clocks 
+    */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = 16;
@@ -386,10 +386,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /**Initializes the CPU, AHB and APB busses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-                                | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    /**Initializes the CPU, AHB and APB busses clocks 
+    */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -400,12 +400,12 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  /**Configure the Systick interrupt time
-  */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
+    /**Configure the Systick interrupt time 
+    */
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
-  /**Configure the Systick
-  */
+    /**Configure the Systick 
+    */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
@@ -419,10 +419,10 @@ void SystemClock_Config(void)
 static void MX_NVIC_Init(void)
 {
   /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 3, 0);
+  HAL_NVIC_SetPriority(USART1_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USART3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART3_IRQn, 4, 0);
+  HAL_NVIC_SetPriority(USART3_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(USART3_IRQn);
 }
 
@@ -483,10 +483,10 @@ static void MX_USART3_UART_Init(void)
 
 }
 
-/**
+/** 
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void)
+static void MX_DMA_Init(void) 
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
@@ -501,9 +501,9 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins as
-        * Analog
-        * Input
+/** Configure pins as 
+        * Analog 
+        * Input 
         * Output
         * EVENT_OUT
         * EXTI
@@ -606,8 +606,8 @@ void _Error_Handler(char *file, int line)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+void assert_failed(uint8_t* file, uint32_t line)
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
