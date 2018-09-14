@@ -1,0 +1,10 @@
+---- usart3_tx_buffer Matches (9 in 3 files) ----
+Main.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):uint8_t  usart3_tx_buffer[128];
+Main.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      printf("Received:%s\r\n", usart3_tx_buffer);
+Main.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):    if (strstr(usart3_tx_buffer, res) != NULL)
+Main.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      printf("Received:%s\r\n", usart3_tx_buffer);
+Main.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      memset(usart3_tx_buffer, 0x00, 128);
+Powerplug.build_log.htm (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):      if (strstr(usart3_tx_buffer, res) != NULL)
+Powerplug.build_log.htm (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):        memset(usart3_tx_buffer, 0x00, 128);
+Stm32f1xx_hal_msp.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):extern uint8_t usart3_tx_buffer[128];
+Stm32f1xx_hal_msp.c (c:\users\dav\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):        memcpy(usart3_tx_buffer, usart3_rx_buffer, usart3_tx_len);
