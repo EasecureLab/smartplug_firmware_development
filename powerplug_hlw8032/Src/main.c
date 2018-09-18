@@ -6,7 +6,7 @@
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
+  * USER CODE END. Other portions of this file, whether
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
@@ -119,7 +119,17 @@ uint8_t  usart1_rx_flag = 0;
 uint8_t  usart1_rx_buffer[48];
 uint8_t  usart1_tx_buffer[48];
 uint16_t usart1_tx_len = 0;
+
+uint8_t usart_oneshot_send = 1;
+
+
 #define UART1_RX_LEN  24
+_Bool net_sendcmd_noblock(char *cmd)
+{
+  dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+  printf("Sent:%s\r\n", cmd);
+
+}
 
 _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
 {
@@ -130,16 +140,23 @@ _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
   printf("Sent:%s\r\n", cmd);
   while (timeOut--)
   {
-    //if (usart3_rx_flag == 1)
-    //{
-    //  usart3_rx_flag = 0;
-    //  printf("Received:%s\r\n", usart3_tx_buffer);
-    //}
+    if (usart3_rx_flag == 1)
+    {
+      usart3_rx_flag = 0;
+      printf("Received:%s\r\n", usart3_tx_buffer);
+      memset(usart3_tx_buffer, 0x00, 128);
+    }
+    if (strstr(usart3_tx_buffer, "ERROR") != NULL)
+    {
+      //if there is some error, lock in this function
+      timeOut = 300;
+    }
     if (strstr(usart3_tx_buffer, res) != NULL)
     {
 
       return 0;
     }
+
     HAL_Delay(10);
   }
   return 1;
@@ -236,26 +253,13 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
+  //uart1 hlw8032
+  //uart2 printf
+  //uart3 esp8266
+
   printf("sichuan university wsn lab\r\n");
   printf("project powerplug v1.0\r\n");
   printf("compile date: %s %s\r\n", __DATE__, __TIME__);
-  #if 0
-  if (HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1) != HAL_OK)
-  {
-    /* Starting Error */
-    Error_Handler();
-  }
-  if (HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2) != HAL_OK)
-  {
-    /* Starting Error */
-    Error_Handler();
-  }
-  if (HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3) != HAL_OK)
-  {
-    /* Starting Error */
-    Error_Handler();
-  }
-  #endif
 
   //uart3 receive dma wifi at command
   if (HAL_UART_Receive_DMA(&huart3, (uint8_t *)&usart3_rx_buffer, 128) != HAL_OK)
@@ -266,32 +270,9 @@ int main(void)
   //enable uart3 idle interrupt
   __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
 
-
   //uart1 receive dma hlw8032 data 24byte
   HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
 
-  //CWMODE_DEF =1
-  NET_DEVICE_SendCmd("AT+CWMODE_DEF=1\r\n", "OK", 1);
-  //CWJAP
-  NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"TP-LINK_B11273\",\"kaiyuan1028\"\r\n", "OK", 1);
-  //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN405\",\"wsn405405\"\r\n", "OK", 1);
-  //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1);
-  HAL_Delay(3000);
-  NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.100\",1234\r\n", "OK", 1);
-  //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1);
-  //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.144\",1234\r\n", "OK", 1);
-  //the length of data which be sent
-  NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
-  HAL_Delay(2000);
-  //the data content
-  NET_DEVICE_SendCmd("abcde\r\n", "OK", 1);
-
-
-  //if(HAL_UART_Receive_DMA(&huart1,(uint8_t *)&usart1_rx_buffer,128) != HAL_OK)
-  //{
-  //  Error_Handler();
-  //}
-  //__HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -299,31 +280,45 @@ int main(void)
   while (1)
   {
 
-  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
+    if (usart_oneshot_send == 1)
+    {
+      usart_oneshot_send = 0;
+      //CWMODE_DEF =1
+      NET_DEVICE_SendCmd("AT+CWMODE_DEF=1\r\n", "OK", 1);
+      //CWJAP
+      NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"TP-LINK_B11273\",\"kaiyuan1028\"\r\n", "OK", 1);
+      //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN405\",\"wsn405405\"\r\n", "OK", 1);
+      //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1);
+      HAL_Delay(3000);
+      NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.100\",1234\r\n", "OK", 1);
+      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1);
+      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.144\",1234\r\n", "OK", 1);
+      //the length of data which be sent
+      NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
+      HAL_Delay(2000);
+      //the data content
+      NET_DEVICE_SendCmd("abcde\r\n", "OK", 1);
+    }
 
+    //esp8266 data send to smart phone, two step including 1,length which will be sent;2,send the data;
+    //send cmd with block
     NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
-    //NET_DEVICE_SendCmd("67890\r\n", "OK", 1);
+    //voltage integer value convert into the value2str
+    if (voltage_int == 0)
+    {
+      //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+      //printf("reinit the uart1 for the hlw8032\r\n");
+    }
+    value2string((int)voltage_int);
     //the data content
     dma_send(value2str, 7);
     HAL_Delay(10);
 
-    //send_count++;
-    //HAL_Delay(5);
-    //if (send_count >= 1)
-    //{
-    //  send_count = 0;
-    //  printf("PA8 CF1 voltage uwFrequency=%d\r\n", uwFrequency);
-    //  printf("PA10 CF power  uwFrequency2=%d\r\n", uwFrequency2);
-    //  uwFrequency = 0;
-    //  uwFrequency2 = 0;
-    //  HAL_Delay(5);
-    //  printf("\r\n");
-    //}
-    //value2string(uwFrequency);
-    value2string((int)voltage_int);
 
+    //esp8266 data processing algorithm
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
@@ -331,6 +326,7 @@ int main(void)
       memset(usart3_tx_buffer, 0x00, 128);
     }
 
+    //hlw8032 data processing algorithm
     if (usart1_rx_flag == 1)
     {
       usart1_rx_flag = 0;
@@ -352,13 +348,8 @@ int main(void)
       printf("voltage=%f\r\n", voltage);
       voltage_int = (int)voltage - 16;
       printf("voltage_int=%d\r\n", voltage_int);
-      //   voltage_parameter_value;
-      //   voltage_reg_value;
-      //uint32_t   current_parameter_value;
-      //uint32_t   current_reg_value;
-      //uint32_t   power_parameter_value;
-      //uint32_t   power_reg_value;
-      //memset(usart1_tx_buffer,0x00,120);
+
+      memset(usart1_tx_buffer, 0x00, 48);
     }
   }
   /* USER CODE END 3 */
@@ -375,8 +366,8 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
+  /**Initializes the CPU, AHB and APB busses clocks
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = 16;
@@ -386,10 +377,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  /**Initializes the CPU, AHB and APB busses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -400,12 +391,12 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+  /**Configure the Systick interrupt time
+  */
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
-    /**Configure the Systick 
-    */
+  /**Configure the Systick
+  */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
@@ -483,10 +474,10 @@ static void MX_USART3_UART_Init(void)
 
 }
 
-/** 
+/**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
@@ -501,9 +492,9 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
+/** Configure pins as
+        * Analog
+        * Input
         * Output
         * EVENT_OUT
         * EXTI
@@ -606,8 +597,8 @@ void _Error_Handler(char *file, int line)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
-{ 
+void assert_failed(uint8_t *file, uint32_t line)
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
