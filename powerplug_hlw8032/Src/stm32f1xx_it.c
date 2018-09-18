@@ -37,7 +37,7 @@
 
 /* USER CODE BEGIN 0 */
 extern void UsartReceive_IDLE(UART_HandleTypeDef *huart);
-extern void uart1_receive_handle(UART_HandleTypeDef *huart);
+
 
 
 /* USER CODE END 0 */
@@ -232,7 +232,7 @@ void DMA1_Channel3_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  //uart1_receive_handle(&huart1);
+
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */

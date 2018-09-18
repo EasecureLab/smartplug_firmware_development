@@ -92,28 +92,16 @@ uint32_t   power_parameter_value;
 uint32_t   power_reg_value;
 float voltage;
 uint32_t voltage_int;
+float current;
+uint32_t current_int;
 
 
-
-
-/* Private variables ---------------------------------------------------------*/
-/* Captured Value */
-uint16_t            uhIC2Value = 0;
-/* Duty Cycle Value */
-uint16_t            uhDutyCycle = 0;
-/* Frequency Value */
-uint32_t            uwFrequency = 0;
-/* Duty Cycle Value */
-uint16_t            uhDutyCycle2 = 0;
-/* Frequency Value */
-uint32_t            uwFrequency2 = 0;
-uint8_t             temp_ch = 0x55;
 
 uint8_t  usart3_rx_flag = 0;
 uint8_t  usart3_rx_buffer[128];
 uint8_t  usart3_tx_buffer[128];
 uint16_t usart3_tx_len = 0;
-uint16_t send_count = 0;
+
 
 uint8_t  usart1_rx_flag = 0;
 uint8_t  usart1_rx_buffer[48];
@@ -122,8 +110,8 @@ uint16_t usart1_tx_len = 0;
 
 uint8_t usart_oneshot_send = 1;
 
-
 #define UART1_RX_LEN  24
+
 _Bool net_sendcmd_noblock(char *cmd)
 {
   dma_send((unsigned char *)cmd, strlen((const char *)cmd));
@@ -140,6 +128,7 @@ _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
   printf("Sent:%s\r\n", cmd);
   while (timeOut--)
   {
+    //block way receive handle
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
@@ -166,7 +155,56 @@ char thousand_char;
 char hundred_char;
 char deci_char;
 char last_char;
-char value2str[10];
+char value2str[11];
+void value2str_in_out(int value, char *str)
+{
+  int temp_value;
+
+  if (value / 10000 != 0)
+  {
+    return ;
+  }
+  else if (value / 10000 == 0) //below 10000
+  {
+    thousand_char = value / 1000 + 0x30; //thousand
+    temp_value = value % 1000; // hundred deci etc
+
+    if (temp_value / 100 != 0)
+    {
+      hundred_char = temp_value / 100 + 0x30;
+    }
+    else if (temp_value / 100 == 0)
+    {
+      hundred_char = 0x30;
+    }
+    temp_value = value % 100; //deci etc;
+
+    if (temp_value / 10 != 0)
+    {
+      deci_char = temp_value / 10 + 0x30;
+    }
+    else if (temp_value / 10 == 0)
+    {
+      deci_char = 0x30;
+    }
+    last_char = value % 10 + 0x30;
+  }
+
+
+  str[0] = 'v';
+  str[1] = 'o';
+  str[2] = 'l';
+  str[3]  = ':';
+
+  str[4] = thousand_char;
+  str[5] = hundred_char;
+  str[6] = deci_char;
+  str[7] = last_char;
+  str[8] = ' ';
+  str[9] = ' ';
+  str[10] = '\0';
+}
+
 void value2string(int value)
 {
   //char temp_str[128];
@@ -201,17 +239,21 @@ void value2string(int value)
     last_char = value % 10 + 0x30;
   }
 
-  value2str[0] = thousand_char;
-  value2str[1] = hundred_char;
-  value2str[2] = deci_char;
-  value2str[3] = last_char;
-  value2str[4] = ' ';
-  value2str[5] = ' ';
+
+  value2str[0] = 'v';
+  value2str[1] = 'o';
+  value2str[2] = 'l';
+  value2str[3] = ':';
+
+  value2str[4] = thousand_char;
+  value2str[5] = hundred_char;
+  value2str[6] = deci_char;
+  value2str[7] = last_char;
+  value2str[8] = ' ';
+  value2str[9] = ' ';
   //value2str[4]='\r';
   //value2str[5]='\n';
-  value2str[6] = '\0';
-
-
+  value2str[10] = '\0';
 }
 
 /* USER CODE END 0 */
@@ -294,43 +336,55 @@ int main(void)
       //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1);
       HAL_Delay(3000);
       NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.100\",1234\r\n", "OK", 1);
+      HAL_Delay(3000);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.144\",1234\r\n", "OK", 1);
       //the length of data which be sent
       NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
-      HAL_Delay(2000);
+      HAL_Delay(3000);
       //the data content
       NET_DEVICE_SendCmd("abcde\r\n", "OK", 1);
+      HAL_Delay(3000);
     }
 
     //esp8266 data send to smart phone, two step including 1,length which will be sent;2,send the data;
-    //send cmd with block
-    NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
-    //voltage integer value convert into the value2str
-    if (voltage_int == 0)
-    {
-      //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
-      //printf("reinit the uart1 for the hlw8032\r\n");
-    }
-    value2string((int)voltage_int);
+    //send voltage
+    NET_DEVICE_SendCmd("AT+CIPSEND=11\r\n", "OK", 1);
+    //value2string((int)voltage_int);
+    value2str_in_out((int)voltage_int, &value2str[0]);
     //the data content
-    dma_send(value2str, 7);
+    dma_send(value2str, 11);
+    //NET_DEVICE_SendCmd(&value2str[0], "OK", 1);
+    //memset(value2str,0,20);
+    HAL_Delay(100);
+
+    //send current
+
+    NET_DEVICE_SendCmd("AT+CIPSEND=11\r\n", "OK", 1);
+    //value2string((int)voltage_int);
+
+    value2str_in_out((int)current_int, value2str);
+    memcpy(value2str, "cur", 3);
+    //the data content
+    dma_send(value2str, 11);
+    //NET_DEVICE_SendCmd(value2str, "OK", 1);
+    //memset(value2str,0,20);
     HAL_Delay(10);
 
-
     //esp8266 data processing algorithm
+    #if 0
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
       printf("Received:%s\r\n", usart3_tx_buffer);
       memset(usart3_tx_buffer, 0x00, 128);
     }
-
+    #endif
     //hlw8032 data processing algorithm
     if (usart1_rx_flag == 1)
     {
       usart1_rx_flag = 0;
-      //printf("Need to handle uart1 data\r\n");
+
       printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[0], usart1_rx_buffer[1], usart1_rx_buffer[2], usart1_rx_buffer[3], usart1_rx_buffer[4], usart1_rx_buffer[5]);
       printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[6], usart1_rx_buffer[7], usart1_rx_buffer[8], usart1_rx_buffer[9], usart1_rx_buffer[10], usart1_rx_buffer[11]);
       printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[12], usart1_rx_buffer[13], usart1_rx_buffer[14], usart1_rx_buffer[15], usart1_rx_buffer[16], usart1_rx_buffer[17]);
@@ -348,6 +402,12 @@ int main(void)
       printf("voltage=%f\r\n", voltage);
       voltage_int = (int)voltage - 16;
       printf("voltage_int=%d\r\n", voltage_int);
+
+      printf("current_parameter_value=%d,current_reg_value=%d\r\n", current_parameter_value, current_reg_value);
+      current = current_parameter_value / current_reg_value * 0.5;
+      printf("current=%f\r\n", current);
+      current_int = (int)current;
+      printf("current_int=%d\r\n", current_int);
 
       memset(usart1_tx_buffer, 0x00, 48);
     }
@@ -529,9 +589,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     usart1_rx_flag = 1;
     HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
 
-    //HAL_UART_Transmit_DMA(&huart2,usart1_rx_buffer,128); // DM2发送出去
-    // HAL_UART_Receive_DMA(&huart1,aRxBuffer1,1); // 重新DMA接收
-    //HAL_UART_Receive_DMA(&huart1,(uint8_t *)&usart1_rx_buffer,128);
   }
 }
 

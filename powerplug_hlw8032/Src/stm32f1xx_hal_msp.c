@@ -287,34 +287,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 }
 
 /* USER CODE BEGIN 1 */
-void uart1_receive_handle(UART_HandleTypeDef *huart)
-{
-  uint16_t i = 0;
-  if (huart->Instance == USART1)
-  {
-    //__HAL_UART_CLEAR_IDLEFLAG(huart);
-    i = huart->Instance->SR;
-    i = huart->Instance->DR;
-    //i = hdma_usart1_rx.Instance->CNDTR;
-    HAL_UART_DMAStop(huart);
-
-    /* handle data*/
-    if (usart1_rx_flag == 0)
-    {
-      usart1_tx_len = 128 - i;
-      //memcpy(usart1_tx_buffer,usart1_rx_buffer,usart1_tx_len);
-      memcpy(usart1_tx_buffer, usart1_rx_buffer, 128);
-
-      usart1_rx_flag = 1;
-    }
-
-    /* clear buffer then receive again*/
-    memset(usart1_rx_buffer, 0x00, 128);
-    HAL_UART_Receive_DMA(huart, (uint8_t *)&usart1_rx_buffer, 128);
-  }
-
-}
-
 void UsartReceive_IDLE(UART_HandleTypeDef *huart)
 {
   uint16_t i = 0;
