@@ -337,8 +337,10 @@ int main(void)
       //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1);
       HAL_Delay(3000);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.100\",1234\r\n", "OK", 1);
-			NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.18\",1234\r\n", "OK", 1);
-      HAL_Delay(3000);
+			NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n", "OK", 1);
+      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.144\",1234\r\n", "OK", 1);
+      
+			HAL_Delay(3000);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.144\",1234\r\n", "OK", 1);
       //the length of data which be sent
