@@ -4,41 +4,52 @@
   * @file           : main.c
   * @brief          : Main program body
   ******************************************************************************
-  ** This notice applies to any and all portions of this file
+  * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
   * USER CODE END. Other portions of this file, whether 
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2018 STMicroelectronics
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * All rights reserved.
   *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
+  * Redistribution and use in source and binary forms, with or without 
+  * modification, are permitted, provided that the following conditions are met:
   *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * 1. Redistribution of source code must retain the above copyright notice, 
+  *    this list of conditions and the following disclaimer.
+  * 2. Redistributions in binary form must reproduce the above copyright notice,
+  *    this list of conditions and the following disclaimer in the documentation
+  *    and/or other materials provided with the distribution.
+  * 3. Neither the name of STMicroelectronics nor the names of other 
+  *    contributors to this software may be used to endorse or promote products 
+  *    derived from this software without specific written permission.
+  * 4. This software, including modifications and/or derivative works of this 
+  *    software, must execute solely and exclusively on microcontroller or
+  *    microprocessor devices manufactured by or for STMicroelectronics.
+  * 5. Redistribution and use of this software other than as permitted under 
+  *    this license is void and will automatically terminate your rights under 
+  *    this license. 
+  *
+  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
+  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
+  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
+  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
+  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
+  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f1xx_hal.h"
+#include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -50,6 +61,11 @@ UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart3_rx;
 DMA_HandleTypeDef hdma_usart3_tx;
+
+osThreadId sys_main_taskHandle;
+osThreadId wifi_recv_taskHandle;
+osThreadId power_recv_taskHandle;
+osSemaphoreId sys_main_can_send_wifiHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -63,6 +79,9 @@ static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
+void start_sys_main(void const * argument);
+void start_wifi_recv(void const * argument);
+void start_power_recv(void const * argument);
 static void MX_NVIC_Init(void);
 
 /* USER CODE BEGIN PFP */
@@ -115,8 +134,7 @@ uint8_t usart_oneshot_send = 1;
 _Bool net_sendcmd_noblock(char *cmd)
 {
   dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-  printf("Sent:%s\r\n", cmd);
-
+  //printf("Sent:%s\r\n", cmd);
 }
 
 _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
@@ -317,6 +335,50 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* Create the semaphores(s) */
+  /* definition and creation of sys_main_can_send_wifi */
+  osSemaphoreDef(sys_main_can_send_wifi);
+  sys_main_can_send_wifiHandle = osSemaphoreCreate(osSemaphore(sys_main_can_send_wifi), 1);
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* Create the thread(s) */
+  /* definition and creation of sys_main_task */
+  osThreadDef(sys_main_task, start_sys_main, osPriorityNormal, 0, 128);
+  sys_main_taskHandle = osThreadCreate(osThread(sys_main_task), NULL);
+
+  /* definition and creation of wifi_recv_task */
+  osThreadDef(wifi_recv_task, start_wifi_recv, osPriorityAboveNormal, 0, 128);
+  wifi_recv_taskHandle = osThreadCreate(osThread(wifi_recv_task), NULL);
+
+  /* definition and creation of power_recv_task */
+  osThreadDef(power_recv_task, start_power_recv, osPriorityNormal, 0, 128);
+  power_recv_taskHandle = osThreadCreate(osThread(power_recv_task), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+ 
+
+  /* Start scheduler */
+  osKernelStart();
+  
+  /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -332,15 +394,15 @@ int main(void)
       NET_DEVICE_SendCmd("AT+CWMODE_DEF=1\r\n", "OK", 1);
       //CWJAP
       //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"TP-LINK_B11273\",\"kaiyuan1028\"\r\n", "OK", 1);
-			//NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n", "OK", 1);
+      //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n", "OK", 1);
       NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n", "OK", 1);
       //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1);
       HAL_Delay(3000);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.100\",1234\r\n", "OK", 1);
-			NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n", "OK", 1);
+      NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n", "OK", 1);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.144\",1234\r\n", "OK", 1);
-      
-			HAL_Delay(3000);
+
+      HAL_Delay(3000);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1);
       //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.144\",1234\r\n", "OK", 1);
       //the length of data which be sent
@@ -464,7 +526,7 @@ void SystemClock_Config(void)
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 }
 
 /**
@@ -548,10 +610,10 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
   /* DMA1_Channel3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
@@ -596,43 +658,77 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   }
 }
 
-#if 0
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
-{
-  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
-  {
-    uwIC2Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-    if (uwIC2Value1 != 0)
-    {
-      /* Duty cycle computation */
-      uhDutyCycle = ((HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2)) * 100) / uwIC2Value1;
-      /* uwFrequency computation
-      //TIM4 counter clock = (RCC_Clocks.HCLK_Frequency)/2 */
-      uwFrequency = (HAL_RCC_GetHCLKFreq()) / 2 / uwIC2Value1;
-    }
-    else
-    {
-      uhDutyCycle = 0;
-      uwFrequency = 0;
-    }
-  }
-  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
-  {
-    uwIC2Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
-    if (uwIC2Value2 != 0)
-    {
-      uhDutyCycle2 = ((HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2)) * 100) / uwIC2Value2;
-      uwFrequency2 = (HAL_RCC_GetHCLKFreq()) / 2 / uwIC2Value2;
-    }
-    else
-    {
-      uhDutyCycle2 = 0;
-      uwFrequency2 = 0;
-    }
-  }
-}
-#endif
+int net_state_machine = 0;
+
 /* USER CODE END 4 */
+
+/* start_sys_main function */
+void start_sys_main(void const * argument)
+{
+
+  /* USER CODE BEGIN 5 */
+  osSemaphoreRelease(sys_main_can_send_wifiHandle);
+  /* Infinite loop */
+  for (;;)
+  {
+    osDelay(1);
+    //printf("default task\r\n");
+    //wifi send function part
+    osSemaphoreWait(sys_main_can_send_wifiHandle, osWaitForever);
+    if (net_state_machine == 0)
+    {
+      net_sendcmd_noblock("AT+CWMODE_DEF=1\r\n");
+    }
+    if (net_state_machine == 1)
+    {
+      net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
+    }
+  }
+  /* USER CODE END 5 */ 
+}
+
+/* start_wifi_recv function */
+void start_wifi_recv(void const * argument)
+{
+  /* USER CODE BEGIN start_wifi_recv */
+  /* Infinite loop */
+  for (;;)
+  {
+    osDelay(1);
+    if (usart3_rx_flag == 1)
+    {
+      usart3_rx_flag = 0;
+      if (net_state_machine == 0)
+      {
+        net_state_machine = 1;
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+        osDelay(2000);
+        osSemaphoreRelease(sys_main_can_send_wifiHandle);
+      }
+      else if (net_state_machine == 1)
+      {
+        net_state_machine = 1;
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+    }
+  }
+  /* USER CODE END start_wifi_recv */
+}
+
+/* start_power_recv function */
+void start_power_recv(void const * argument)
+{
+  /* USER CODE BEGIN start_power_recv */
+  /* Infinite loop */
+  for (;;)
+  {
+    osDelay(10000);
+    printf("power task\r\n");
+  }
+  /* USER CODE END start_power_recv */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
