@@ -59,6 +59,7 @@
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart3_rx;
 DMA_HandleTypeDef hdma_usart3_tx;
 
@@ -331,7 +332,13 @@ int main(void)
   __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
 
   //uart1 receive dma hlw8032 data 24byte
-  HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+  //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+  if (HAL_UART_Receive_DMA(&huart1, (uint8_t *)&usart1_rx_buffer, 128) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  //enable uart1 idle interrupt
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
 
   /* USER CODE END 2 */
 
@@ -354,7 +361,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of sys_main_task */
-  osThreadDef(sys_main_task, start_sys_main, osPriorityNormal, 0, 128);
+  osThreadDef(sys_main_task, start_sys_main, osPriorityHigh, 0, 128);
   sys_main_taskHandle = osThreadCreate(osThread(sys_main_task), NULL);
 
   /* definition and creation of wifi_recv_task */
@@ -615,6 +622,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
 
 }
 
@@ -671,8 +681,7 @@ void start_sys_main(void const * argument)
   /* Infinite loop */
   for (;;)
   {
-    osDelay(1);
-    //printf("default task\r\n");
+    osDelay(50);
     //wifi send function part
     osSemaphoreWait(sys_main_can_send_wifiHandle, osWaitForever);
     if (net_state_machine == 0)
@@ -683,6 +692,19 @@ void start_sys_main(void const * argument)
     {
       net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
     }
+    if (net_state_machine == 2)
+    {
+      net_sendcmd_noblock("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n");
+    }
+    if (net_state_machine == 3)
+    {
+      net_sendcmd_noblock("AT+CIPSEND=7\r\n");
+    }
+    if (net_state_machine == 4)
+    {
+      net_sendcmd_noblock("hello\r\n");
+    }
+
   }
   /* USER CODE END 5 */ 
 }
@@ -694,7 +716,7 @@ void start_wifi_recv(void const * argument)
   /* Infinite loop */
   for (;;)
   {
-    osDelay(1);
+    osDelay(50);
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
@@ -709,6 +731,41 @@ void start_wifi_recv(void const * argument)
       else if (net_state_machine == 1)
       {
         net_state_machine = 1;
+
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 2;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
+
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == 2)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 3;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == 3)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 4;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == 4)
+      {
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
@@ -724,8 +781,13 @@ void start_power_recv(void const * argument)
   /* Infinite loop */
   for (;;)
   {
-    osDelay(10000);
-    printf("power task\r\n");
+    osDelay(50);
+    //printf("power task\r\n");
+    if (usart1_rx_flag == 1)
+    {
+      usart1_rx_flag = 0;
+      printf("power task\r\n");
+    }
   }
   /* USER CODE END start_power_recv */
 }

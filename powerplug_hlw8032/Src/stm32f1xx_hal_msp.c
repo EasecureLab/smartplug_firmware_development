@@ -49,6 +49,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
+extern DMA_HandleTypeDef hdma_usart1_rx;
+
 extern DMA_HandleTypeDef hdma_usart3_rx;
 
 extern DMA_HandleTypeDef hdma_usart3_tx;
@@ -135,6 +137,23 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    /* USART1 DMA Init */
+    /* USART1_RX Init */
+    hdma_usart1_rx.Instance = DMA1_Channel5;
+    hdma_usart1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_usart1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart1_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart1_rx.Init.Mode = DMA_NORMAL;
+    hdma_usart1_rx.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_usart1_rx) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    __HAL_LINKDMA(huart,hdmarx,hdma_usart1_rx);
 
   /* USER CODE BEGIN USART1_MspInit 1 */
 
@@ -245,6 +264,9 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
 
+    /* USART1 DMA DeInit */
+    HAL_DMA_DeInit(huart->hdmarx);
+
     /* USART1 interrupt DeInit */
     HAL_NVIC_DisableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspDeInit 1 */
@@ -322,6 +344,26 @@ void UsartReceive_IDLE(UART_HandleTypeDef *huart)
       /* clear buffer then receive again*/
       memset(usart3_rx_buffer, 0x00, 128);
       HAL_UART_Receive_DMA(huart, (uint8_t *)&usart3_rx_buffer, 128);
+    }
+    else if (huart->Instance == USART1)
+    {
+      __HAL_UART_CLEAR_IDLEFLAG(huart);
+      i = huart->Instance->SR;
+      i = huart->Instance->DR;
+      i = hdma_usart1_rx.Instance->CNDTR;
+      HAL_UART_DMAStop(huart);
+
+      /* handle data*/
+      if (usart1_rx_flag == 0)
+      {
+        usart1_tx_len = 128 - i;
+        memcpy(usart1_tx_buffer, usart1_rx_buffer, usart1_tx_len);
+        usart1_rx_flag = 1;
+      }
+
+      /* clear buffer then receive again*/
+      memset(usart1_rx_buffer, 0x00, 128);
+      HAL_UART_Receive_DMA(huart, (uint8_t *)&usart1_rx_buffer, 128);
     }
   }
 }

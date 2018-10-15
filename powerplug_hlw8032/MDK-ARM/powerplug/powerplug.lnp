@@ -1,6 +1,7 @@
 --cpu Cortex-M3
 "powerplug\startup_stm32f103xb.o"
 "powerplug\main.o"
+"powerplug\freertos.o"
 "powerplug\stm32f1xx_it.o"
 "powerplug\stm32f1xx_hal_msp.o"
 "powerplug\stm32f1xx_hal_gpio_ex.o"
@@ -17,6 +18,15 @@
 "powerplug\stm32f1xx_hal_flash.o"
 "powerplug\stm32f1xx_hal_flash_ex.o"
 "powerplug\system_stm32f1xx.o"
+"powerplug\heap_4.o"
+"powerplug\port.o"
+"powerplug\croutine.o"
+"powerplug\event_groups.o"
+"powerplug\list.o"
+"powerplug\queue.o"
+"powerplug\tasks.o"
+"powerplug\timers.o"
+"powerplug\cmsis_os.o"
 --library_type=microlib --strict --scatter "powerplug\powerplug.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
