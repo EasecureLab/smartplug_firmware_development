@@ -3,7 +3,7 @@
 <title>Static Call Graph - [powerplug\powerplug.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image powerplug\powerplug.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060528: Last Updated: Mon Oct 22 20:33:48 2018
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060528: Last Updated: Mon Oct 22 22:50:48 2018
 <BR><P>
 <H3>Maximum Stack Usage =        248 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -837,6 +837,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_wifi_recv
 <LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_power_recv
+<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;net_sendcmd_noblock
 <LI><a href="#[35]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
@@ -887,11 +888,12 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>
-<P><STRONG><a name="[99]"></a>net_sendcmd_noblock</STRONG> (Thumb, 20 bytes, Stack size 8 bytes, main.o(i.net_sendcmd_noblock))
+<P><STRONG><a name="[99]"></a>net_sendcmd_noblock</STRONG> (Thumb, 28 bytes, Stack size 8 bytes, main.o(i.net_sendcmd_noblock))
 <BR><BR>[Stack]<UL><LI>Max Depth = 68<LI>Call Chain = net_sendcmd_noblock &rArr; dma_send &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dma_send
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strlen
+<LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_sys_main
 </UL>

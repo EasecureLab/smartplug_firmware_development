@@ -5,10 +5,10 @@
 <h2>Tool Versions:</h2>
 IDE-Version: ¦ÌVision V5.24.2.0
 Copyright (C) 2017 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: dav AutoBVT, Microsoft, LIC=W96AR-KWC6F-05WTY-I5TNG-7FG8R-9GIXH
+License Information: david Microsoft, Microsoft, LIC=ATT9U-SHTZ7-ETV3J-U4SU3-YMS3H-VM982
  
 Tool Versions:
-Toolchain:       MDK-ARM Professional  Version: 5.24.1
+Toolchain:       MDK-ARM Plus  Version: 5.24.1
 Toolchain Path:  C:\Keil_v5\ARM\ARMCC\Bin
 C Compiler:      Armcc.exe V5.06 update 5 (build 528)
 Assembler:       Armasm.exe V5.06 update 5 (build 528)
@@ -21,81 +21,13 @@ Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.1.0
 Dialog DLL:      TCM.DLL V1.32.0.0
  
 <h2>Project:</h2>
-D:\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\MDK-ARM\powerplug.uvprojx
+C:\Users\Administrator\Desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\MDK-ARM\powerplug.uvprojx
 Project File Date:  10/22/2018
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'powerplug'
-compiling main.c...
-../Src/main.c(146): warning:  #223-D: function "dma_send" declared implicitly
-    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-../Src/main.c(146): warning:  #223-D: function "strlen" declared implicitly
-    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-../Src/main.c(148): warning:  #940-D: missing return statement at end of non-void function "net_sendcmd_noblock" 
-  }
-../Src/main.c(152): warning:  #69-D: integer conversion resulted in truncation
-    unsigned char timeOut = 300;
-../Src/main.c(155): warning:  #223-D: function "dma_send" declared implicitly
-    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-../Src/main.c(155): warning:  #223-D: function "strlen" declared implicitly
-    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-../Src/main.c(164): warning:  #223-D: function "memset" declared implicitly
-        memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(166): warning:  #223-D: function "strstr" declared implicitly
-      if (strstr(usart3_tx_buffer, "ERROR") != NULL)
-../Src/main.c(169): warning:  #69-D: integer conversion resulted in truncation
-        timeOut = 300;
-../Src/main.c(171): warning:  #223-D: function "strstr" declared implicitly
-      if (strstr(usart3_tx_buffer, res) != NULL)
-../Src/main.c(630): warning:  #223-D: function "dma_send" declared implicitly
-        dma_send(value2str_vol, 11);
-../Src/main.c(653): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(661): warning:  #223-D: function "strstr" declared implicitly
-          if (strstr(usart3_tx_buffer, "OK"))
-../Src/main.c(664): warning:  #223-D: function "memset" declared implicitly
-            memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(669): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(673): warning:  #223-D: function "strstr" declared implicitly
-          if (strstr(usart3_tx_buffer, "OK"))
-../Src/main.c(676): warning:  #223-D: function "memset" declared implicitly
-            memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(680): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(684): warning:  #223-D: function "strstr" declared implicitly
-          if (strstr(usart3_tx_buffer, "OK"))
-../Src/main.c(687): warning:  #223-D: function "memset" declared implicitly
-            memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(691): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(695): warning:  #223-D: function "strstr" declared implicitly
-          if (strstr(usart3_tx_buffer, "OK"))
-../Src/main.c(698): warning:  #223-D: function "memset" declared implicitly
-            memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(702): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(706): warning:  #223-D: function "strstr" declared implicitly
-          if (strstr(usart3_tx_buffer, "OK"))
-../Src/main.c(709): warning:  #223-D: function "memset" declared implicitly
-            memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(714): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(719): warning:  #223-D: function "strstr" declared implicitly
-          if (strstr(usart3_tx_buffer, "OK"))
-../Src/main.c(722): warning:  #223-D: function "memset" declared implicitly
-            memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(727): warning:  #223-D: function "memset" declared implicitly
-          memset(usart3_tx_buffer, 0x00, 128);
-../Src/main.c(778): warning:  #223-D: function "memset" declared implicitly
-        memset(usart1_tx_buffer, 0x00, 48);
-../Src/main.c: 31 warnings, 0 errors
-compiling stm32f1xx_it.c...
-linking...
-Program Size: Code=16760 RO-data=400 RW-data=188 ZI-data=5124  
-FromELF: creating hex file...
-"powerplug\powerplug.axf" - 0 Error(s), 31 Warning(s).
+"powerplug\powerplug.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -118,7 +50,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.1.1
-Build Time Elapsed:  00:00:02
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>

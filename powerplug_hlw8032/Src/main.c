@@ -91,7 +91,7 @@ static void MX_NVIC_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-extern uint8_t send_data_to_esp8266(char *fmt, ...);
+
 #define UART1_RX_LEN  24
 
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
@@ -101,35 +101,26 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 
-uint32_t               uwIC2Value1 = 0;
-uint32_t               uwIC2Value2 = 0;
-uint32_t               uwDiffCapture = 0;
-
 uint32_t   voltage_parameter_value;
 uint32_t   voltage_reg_value;
 uint32_t   current_parameter_value;
 uint32_t   current_reg_value;
 uint32_t   power_parameter_value;
 uint32_t   power_reg_value;
-float voltage;
-uint32_t voltage_int;
-float current;
-uint32_t current_int;
+float      voltage;
+uint32_t   voltage_int;
+float      current;
+uint32_t   current_int;
 
+uint8_t    usart3_rx_flag = 0;
+uint8_t    usart3_rx_buffer[128];
+uint8_t    usart3_tx_buffer[128];
+uint16_t   usart3_tx_len = 0;
 
-
-uint8_t  usart3_rx_flag = 0;
-uint8_t  usart3_rx_buffer[128];
-uint8_t  usart3_tx_buffer[128];
-uint16_t usart3_tx_len = 0;
-
-
-uint8_t  usart1_rx_flag = 0;
-uint8_t  usart1_rx_buffer[48];
-uint8_t  usart1_tx_buffer[48];
-uint16_t usart1_tx_len = 0;
-
-uint8_t usart_oneshot_send = 1;
+uint8_t    usart1_rx_flag = 0;
+uint8_t    usart1_rx_buffer[48];
+uint8_t    usart1_tx_buffer[48];
+uint16_t   usart1_tx_len = 0;
 
 char thousand_char;
 char hundred_char;
@@ -138,48 +129,13 @@ char last_char;
 char value2str[11];
 char value2str_vol[11];
 char value2str_cur[11];
-
 int net_state_machine = 0;
 
 _Bool net_sendcmd_noblock(char *cmd)
 {
   dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-  //printf("Sent:%s\r\n", cmd);
-}
-
-_Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
-{
-  unsigned char timeOut = 300;
-  //dma_send(ptr, len1);
-  //NET_IO_Send((unsigned char *)cmd, strlen((const char *)cmd)); //–¥√¸¡ÓµΩÕ¯¬Á…Ë±∏
-  dma_send((unsigned char *)cmd, strlen((const char *)cmd));
   printf("Sent:%s\r\n", cmd);
-  while (timeOut--)
-  {
-    //block way receive handle
-    if (usart3_rx_flag == 1)
-    {
-      usart3_rx_flag = 0;
-      printf("Received:%s\r\n", usart3_tx_buffer);
-      memset(usart3_tx_buffer, 0x00, 128);
-    }
-    if (strstr(usart3_tx_buffer, "ERROR") != NULL)
-    {
-      //if there is some error, lock in this function
-      timeOut = 300;
-    }
-    if (strstr(usart3_tx_buffer, res) != NULL)
-    {
-
-      return 0;
-    }
-
-    HAL_Delay(10);
-  }
-  return 1;
 }
-
-
 
 void value2str_in_out(int value, char *str)
 {
@@ -228,57 +184,6 @@ void value2str_in_out(int value, char *str)
   str[8] = ' ';
   str[9] = ' ';
   str[10] = '\0';
-}
-
-void value2string(int value)
-{
-  //char temp_str[128];
-  int temp_value;
-  if (value / 10000 != 0)
-  {
-    return ;
-  }
-  else if (value / 10000 == 0) //below 10000
-  {
-    thousand_char = value / 1000 + 0x30; //thousand
-    temp_value = value % 1000; // hundred deci etc
-
-    if (temp_value / 100 != 0)
-    {
-      hundred_char = temp_value / 100 + 0x30;
-    }
-    else if (temp_value / 100 == 0)
-    {
-      hundred_char = 0x30;
-    }
-    temp_value = value % 100; //deci etc;
-
-    if (temp_value / 10 != 0)
-    {
-      deci_char = temp_value / 10 + 0x30;
-    }
-    else if (temp_value / 10 == 0)
-    {
-      deci_char = 0x30;
-    }
-    last_char = value % 10 + 0x30;
-  }
-
-
-  value2str[0] = 'v';
-  value2str[1] = 'o';
-  value2str[2] = 'l';
-  value2str[3] = ':';
-
-  value2str[4] = thousand_char;
-  value2str[5] = hundred_char;
-  value2str[6] = deci_char;
-  value2str[7] = last_char;
-  value2str[8] = ' ';
-  value2str[9] = ' ';
-  //value2str[4]='\r';
-  //value2str[5]='\n';
-  value2str[10] = '\0';
 }
 
 /* USER CODE END 0 */
@@ -395,7 +300,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	
+
   }
   /* USER CODE END 3 */
 
@@ -584,8 +489,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
   }
 }
-
-
 
 /* USER CODE END 4 */
 
