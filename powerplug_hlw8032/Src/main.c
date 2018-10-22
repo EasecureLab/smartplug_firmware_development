@@ -532,8 +532,6 @@ void start_sys_main(void const *argument)
     {
       dma_send(value2str_vol, 11);
     }
-
-
   }
   /* USER CODE END 5 */
 }

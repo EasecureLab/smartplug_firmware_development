@@ -1,14 +1,2 @@
----- net_sendcmd_noblock Matches (13 in 3 files) ----
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):_Bool net_sendcmd_noblock(char *cmd)
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      net_sendcmd_noblock("AT+CWMODE_DEF=1\r\n");
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      net_sendcmd_noblock("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n");
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      net_sendcmd_noblock("AT+CIPSEND=7\r\n");
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      net_sendcmd_noblock("hello\r\n");
-Main.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):      net_sendcmd_noblock("AT+CIPSEND=11\r\n");
-Powerplug.build_log.htm (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):../Src/main.c(140): warning:  #940-D: missing return statement at end of non-void function "net_sendcmd_noblock" 
-Powerplug.htm (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):<BR><BR>[Called By]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;net_sendcmd_noblock
-Powerplug.htm (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;net_sendcmd_noblock
-Powerplug.htm (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):<P><STRONG><a name="[99]"></a>net_sendcmd_noblock</STRONG> (Thumb, 20 bytes, Stack size 8 bytes, main.o(i.net_sendcmd_noblock))
-Powerplug.htm (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):<BR><BR>[Stack]<UL><LI>Max Depth = 68<LI>Call Chain = net_sendcmd_noblock &rArr; dma_send &rArr; HAL_UART_Transmit_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
-Powerplug.htm (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\mdk-arm\powerplug):<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;net_sendcmd_noblock
+---- send_to_NB Matches (1 in 1 files) ----
+Stm32f1xx_hal_msp.c (c:\users\administrator\desktop\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\src):uint8_t send_to_NB[LEN];

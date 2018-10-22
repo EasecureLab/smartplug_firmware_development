@@ -38,9 +38,6 @@
 
 /* USER CODE BEGIN 0 */
 extern void UsartReceive_IDLE(UART_HandleTypeDef *huart);
-
-
-
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -222,11 +219,7 @@ void DMA1_Channel5_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  //if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
-  {
-    //  UsartReceive_IDLE(&huart1);
-  }
-
+  
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */

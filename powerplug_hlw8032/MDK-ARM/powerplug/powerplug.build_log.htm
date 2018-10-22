@@ -26,8 +26,88 @@ Project File Date:  10/22/2018
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
-Build target 'powerplug'
-"powerplug\powerplug.axf" - 0 Error(s), 0 Warning(s).
+Rebuild target 'powerplug'
+assembling startup_stm32f103xb.s...
+compiling freertos.c...
+compiling main.c...
+../Src/main.c(136): warning:  #223-D: function "dma_send" declared implicitly
+    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+../Src/main.c(136): warning:  #223-D: function "strlen" declared implicitly
+    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+../Src/main.c(138): warning:  #940-D: missing return statement at end of non-void function "net_sendcmd_noblock" 
+  }
+../Src/main.c(533): warning:  #223-D: function "dma_send" declared implicitly
+        dma_send(value2str_vol, 11);
+../Src/main.c(554): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(562): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(565): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(570): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(574): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(577): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(581): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(585): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(588): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(592): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(596): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(599): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(603): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(607): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(610): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(615): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(620): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(623): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(628): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(679): warning:  #223-D: function "memset" declared implicitly
+        memset(usart1_tx_buffer, 0x00, 48);
+../Src/main.c: 24 warnings, 0 errors
+compiling stm32f1xx_hal_msp.c...
+compiling stm32f1xx_it.c...
+compiling stm32f1xx_hal_tim_ex.c...
+compiling stm32f1xx_hal_gpio_ex.c...
+compiling stm32f1xx_hal_tim.c...
+compiling stm32f1xx_hal.c...
+compiling stm32f1xx_hal_uart.c...
+compiling stm32f1xx_hal_rcc.c...
+compiling stm32f1xx_hal_gpio.c...
+compiling stm32f1xx_hal_rcc_ex.c...
+compiling stm32f1xx_hal_cortex.c...
+compiling stm32f1xx_hal_dma.c...
+compiling stm32f1xx_hal_pwr.c...
+compiling stm32f1xx_hal_flash.c...
+compiling stm32f1xx_hal_flash_ex.c...
+compiling heap_4.c...
+compiling system_stm32f1xx.c...
+compiling croutine.c...
+compiling port.c...
+compiling event_groups.c...
+compiling list.c...
+compiling timers.c...
+compiling queue.c...
+compiling tasks.c...
+compiling cmsis_os.c...
+linking...
+Program Size: Code=16780 RO-data=400 RW-data=188 ZI-data=5108  
+FromELF: creating hex file...
+"powerplug\powerplug.axf" - 0 Error(s), 24 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -50,7 +130,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.1.1
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:27
 </pre>
 </body>
 </html>
