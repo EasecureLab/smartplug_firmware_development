@@ -51,7 +51,7 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
-/*            Cortex-M3 Processor Interruption and Exception Handlers         */ 
+/*            Cortex-M3 Processor Interruption and Exception Handlers         */
 /******************************************************************************/
 
 /**
@@ -222,9 +222,9 @@ void DMA1_Channel5_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
+  //if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
   {
-    UsartReceive_IDLE(&huart1);
+  //  UsartReceive_IDLE(&huart1);
   }
 
   /* USER CODE END USART1_IRQn 0 */

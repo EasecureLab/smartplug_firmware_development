@@ -6,41 +6,41 @@
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
+  * USER CODE END. Other portions of this file, whether
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V.
   * All rights reserved.
   *
-  * Redistribution and use in source and binary forms, with or without 
+  * Redistribution and use in source and binary forms, with or without
   * modification, are permitted, provided that the following conditions are met:
   *
-  * 1. Redistribution of source code must retain the above copyright notice, 
+  * 1. Redistribution of source code must retain the above copyright notice,
   *    this list of conditions and the following disclaimer.
   * 2. Redistributions in binary form must reproduce the above copyright notice,
   *    this list of conditions and the following disclaimer in the documentation
   *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
+  * 3. Neither the name of STMicroelectronics nor the names of other
+  *    contributors to this software may be used to endorse or promote products
   *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
+  * 4. This software, including modifications and/or derivative works of this
   *    software, must execute solely and exclusively on microcontroller or
   *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
+  * 5. Redistribution and use of this software other than as permitted under
+  *    this license is void and will automatically terminate your rights under
+  *    this license.
   *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS"
+  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT
+  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
   * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
+  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT
   * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
   * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
   * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
@@ -80,9 +80,9 @@ static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
-void start_sys_main(void const * argument);
-void start_wifi_recv(void const * argument);
-void start_power_recv(void const * argument);
+void start_sys_main(void const *argument);
+void start_wifi_recv(void const *argument);
+void start_power_recv(void const *argument);
 static void MX_NVIC_Init(void);
 
 /* USER CODE BEGIN PFP */
@@ -92,6 +92,7 @@ static void MX_NVIC_Init(void);
 
 /* USER CODE BEGIN 0 */
 extern uint8_t send_data_to_esp8266(char *fmt, ...);
+#define UART1_RX_LEN  24
 
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 PUTCHAR_PROTOTYPE
@@ -130,7 +131,15 @@ uint16_t usart1_tx_len = 0;
 
 uint8_t usart_oneshot_send = 1;
 
-#define UART1_RX_LEN  24
+char thousand_char;
+char hundred_char;
+char deci_char;
+char last_char;
+char value2str[11];
+char value2str_vol[11];
+char value2str_cur[11];
+
+int net_state_machine = 0;
 
 _Bool net_sendcmd_noblock(char *cmd)
 {
@@ -170,11 +179,8 @@ _Bool NET_DEVICE_SendCmd(char *cmd, char *res, _Bool mode)
   return 1;
 }
 
-char thousand_char;
-char hundred_char;
-char deci_char;
-char last_char;
-char value2str[11];
+
+
 void value2str_in_out(int value, char *str)
 {
   int temp_value;
@@ -332,13 +338,8 @@ int main(void)
   __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
 
   //uart1 receive dma hlw8032 data 24byte
-  //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
-  if (HAL_UART_Receive_DMA(&huart1, (uint8_t *)&usart1_rx_buffer, 128) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  //enable uart1 idle interrupt
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
+  HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+
 
   /* USER CODE END 2 */
 
@@ -379,11 +380,11 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
- 
+
 
   /* Start scheduler */
   osKernelStart();
-  
+
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -391,99 +392,10 @@ int main(void)
   while (1)
   {
 
-  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
-    if (usart_oneshot_send == 1)
-    {
-      usart_oneshot_send = 0;
-      //CWMODE_DEF =1
-      NET_DEVICE_SendCmd("AT+CWMODE_DEF=1\r\n", "OK", 1);
-      //CWJAP
-      //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"TP-LINK_B11273\",\"kaiyuan1028\"\r\n", "OK", 1);
-      //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n", "OK", 1);
-      NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n", "OK", 1);
-      //NET_DEVICE_SendCmd("AT+CWJAP_DEF=\"WSN407\",\"wsn407407\"\r\n", "OK", 1);
-      HAL_Delay(3000);
-      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.100\",1234\r\n", "OK", 1);
-      NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n", "OK", 1);
-      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.144\",1234\r\n", "OK", 1);
-
-      HAL_Delay(3000);
-      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.199.102\",8080\r\n", "OK", 1);
-      //NET_DEVICE_SendCmd("AT+CIPSTART=\"TCP\",\"192.168.1.144\",1234\r\n", "OK", 1);
-      //the length of data which be sent
-      NET_DEVICE_SendCmd("AT+CIPSEND=7\r\n", "OK", 1);
-      HAL_Delay(3000);
-      //the data content
-      NET_DEVICE_SendCmd("abcde\r\n", "OK", 1);
-      HAL_Delay(3000);
-    }
-
-    //esp8266 data send to smart phone, two step including 1,length which will be sent;2,send the data;
-    //send voltage
-    NET_DEVICE_SendCmd("AT+CIPSEND=11\r\n", "OK", 1);
-    //value2string((int)voltage_int);
-    value2str_in_out((int)voltage_int, &value2str[0]);
-    //the data content
-    dma_send(value2str, 11);
-    //NET_DEVICE_SendCmd(&value2str[0], "OK", 1);
-    //memset(value2str,0,20);
-    HAL_Delay(100);
-
-    //send current
-
-    NET_DEVICE_SendCmd("AT+CIPSEND=11\r\n", "OK", 1);
-    //value2string((int)voltage_int);
-
-    value2str_in_out((int)current_int, value2str);
-    memcpy(value2str, "cur", 3);
-    //the data content
-    dma_send(value2str, 11);
-    //NET_DEVICE_SendCmd(value2str, "OK", 1);
-    //memset(value2str,0,20);
-    HAL_Delay(10);
-
-    //esp8266 data processing algorithm
-    #if 0
-    if (usart3_rx_flag == 1)
-    {
-      usart3_rx_flag = 0;
-      printf("Received:%s\r\n", usart3_tx_buffer);
-      memset(usart3_tx_buffer, 0x00, 128);
-    }
-    #endif
-    //hlw8032 data processing algorithm
-    if (usart1_rx_flag == 1)
-    {
-      usart1_rx_flag = 0;
-
-      printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[0], usart1_rx_buffer[1], usart1_rx_buffer[2], usart1_rx_buffer[3], usart1_rx_buffer[4], usart1_rx_buffer[5]);
-      printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[6], usart1_rx_buffer[7], usart1_rx_buffer[8], usart1_rx_buffer[9], usart1_rx_buffer[10], usart1_rx_buffer[11]);
-      printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[12], usart1_rx_buffer[13], usart1_rx_buffer[14], usart1_rx_buffer[15], usart1_rx_buffer[16], usart1_rx_buffer[17]);
-      printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[18], usart1_rx_buffer[19], usart1_rx_buffer[20], usart1_rx_buffer[21], usart1_rx_buffer[22], usart1_rx_buffer[23]);
-
-      voltage_parameter_value = usart1_rx_buffer[2] * 65536 + usart1_rx_buffer[3] * 256 + usart1_rx_buffer[4];
-      voltage_reg_value = usart1_rx_buffer[5] * 65536 + usart1_rx_buffer[6] * 256 + usart1_rx_buffer[7];
-      current_parameter_value = usart1_rx_buffer[8] * 65536 + usart1_rx_buffer[9] * 256 + usart1_rx_buffer[10];
-      current_reg_value = usart1_rx_buffer[11] * 65536 + usart1_rx_buffer[12] * 256 + usart1_rx_buffer[13];
-      power_parameter_value = usart1_rx_buffer[14] * 65536 + usart1_rx_buffer[15] * 256 + usart1_rx_buffer[16];
-      power_reg_value = usart1_rx_buffer[17] * 65536 + usart1_rx_buffer[18] * 256 + usart1_rx_buffer[19];
-
-      printf("voltage_parameter_value=%d,voltage_reg_value=%d\r\n", voltage_parameter_value, voltage_reg_value);
-      voltage = voltage_parameter_value / voltage_reg_value * 1.88;
-      printf("voltage=%f\r\n", voltage);
-      voltage_int = (int)voltage - 16;
-      printf("voltage_int=%d\r\n", voltage_int);
-
-      printf("current_parameter_value=%d,current_reg_value=%d\r\n", current_parameter_value, current_reg_value);
-      current = current_parameter_value / current_reg_value * 0.5;
-      printf("current=%f\r\n", current);
-      current_int = (int)current;
-      printf("current_int=%d\r\n", current_int);
-
-      memset(usart1_tx_buffer, 0x00, 48);
-    }
+    /* USER CODE BEGIN 3 */
+	
   }
   /* USER CODE END 3 */
 
@@ -499,8 +411,8 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
+  /**Initializes the CPU, AHB and APB busses clocks
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = 16;
@@ -510,10 +422,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  /**Initializes the CPU, AHB and APB busses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -524,12 +436,12 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+  /**Configure the Systick interrupt time
+  */
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
-    /**Configure the Systick 
-    */
+  /**Configure the Systick
+  */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
@@ -543,7 +455,7 @@ void SystemClock_Config(void)
 static void MX_NVIC_Init(void)
 {
   /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USART3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(USART3_IRQn, 7, 0);
@@ -607,10 +519,10 @@ static void MX_USART3_UART_Init(void)
 
 }
 
-/** 
+/**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
@@ -628,9 +540,9 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
+/** Configure pins as
+        * Analog
+        * Input
         * Output
         * EVENT_OUT
         * EXTI
@@ -661,19 +573,24 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart->Instance == USART1)
   {
-    //printf("recv power data\r\n");
     usart1_rx_flag = 1;
     HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
-
+  }
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1)
+  {
+    HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
   }
 }
 
-int net_state_machine = 0;
+
 
 /* USER CODE END 4 */
 
 /* start_sys_main function */
-void start_sys_main(void const * argument)
+void start_sys_main(void const *argument)
 {
 
   /* USER CODE BEGIN 5 */
@@ -704,13 +621,22 @@ void start_sys_main(void const * argument)
     {
       net_sendcmd_noblock("hello\r\n");
     }
+    if (net_state_machine == 5)
+    {
+      net_sendcmd_noblock("AT+CIPSEND=11\r\n");
+    }
+    if (net_state_machine == 6)
+    {
+      dma_send(value2str_vol, 11);
+    }
+
 
   }
-  /* USER CODE END 5 */ 
+  /* USER CODE END 5 */
 }
 
 /* start_wifi_recv function */
-void start_wifi_recv(void const * argument)
+void start_wifi_recv(void const *argument)
 {
   /* USER CODE BEGIN start_wifi_recv */
   /* Infinite loop */
@@ -766,27 +692,95 @@ void start_wifi_recv(void const * argument)
       }
       else if (net_state_machine == 4)
       {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 5;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
+      else if (net_state_machine == 5)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 6;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+
+      }
+      else if (net_state_machine == 6)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 5;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+
     }
   }
   /* USER CODE END start_wifi_recv */
 }
 
 /* start_power_recv function */
-void start_power_recv(void const * argument)
+void start_power_recv(void const *argument)
 {
   /* USER CODE BEGIN start_power_recv */
+  uint16_t count;
   /* Infinite loop */
   for (;;)
   {
-    osDelay(50);
-    //printf("power task\r\n");
     if (usart1_rx_flag == 1)
     {
+      count++;
       usart1_rx_flag = 0;
-      printf("power task\r\n");
+      if (count > 20)
+      {
+        count = 0;
+        printf("voltage=%f\r\n", voltage);
+        printf("current=%f\r\n", current);
+      }
+      #if 1
+      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[0], usart1_rx_buffer[1], usart1_rx_buffer[2], usart1_rx_buffer[3], usart1_rx_buffer[4], usart1_rx_buffer[5]);
+      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[6], usart1_rx_buffer[7], usart1_rx_buffer[8], usart1_rx_buffer[9], usart1_rx_buffer[10], usart1_rx_buffer[11]);
+      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[12], usart1_rx_buffer[13], usart1_rx_buffer[14], usart1_rx_buffer[15], usart1_rx_buffer[16], usart1_rx_buffer[17]);
+      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[18], usart1_rx_buffer[19], usart1_rx_buffer[20], usart1_rx_buffer[21], usart1_rx_buffer[22], usart1_rx_buffer[23]);
+
+      voltage_parameter_value = usart1_rx_buffer[2] * 65536 + usart1_rx_buffer[3] * 256 + usart1_rx_buffer[4];
+      voltage_reg_value = usart1_rx_buffer[5] * 65536 + usart1_rx_buffer[6] * 256 + usart1_rx_buffer[7];
+      current_parameter_value = usart1_rx_buffer[8] * 65536 + usart1_rx_buffer[9] * 256 + usart1_rx_buffer[10];
+      current_reg_value = usart1_rx_buffer[11] * 65536 + usart1_rx_buffer[12] * 256 + usart1_rx_buffer[13];
+      power_parameter_value = usart1_rx_buffer[14] * 65536 + usart1_rx_buffer[15] * 256 + usart1_rx_buffer[16];
+      power_reg_value = usart1_rx_buffer[17] * 65536 + usart1_rx_buffer[18] * 256 + usart1_rx_buffer[19];
+
+      //printf("voltage_parameter_value=%d,voltage_reg_value=%d\r\n", voltage_parameter_value, voltage_reg_value);
+      voltage = voltage_parameter_value / voltage_reg_value * 1.88;
+      //printf("voltage=%f\r\n", voltage);
+      voltage_int = (int)voltage - 16;
+      //printf("voltage_int=%d\r\n", voltage_int);
+
+      //printf("current_parameter_value=%d,current_reg_value=%d\r\n", current_parameter_value, current_reg_value);
+      current = current_parameter_value / current_reg_value * 0.5;
+      //printf("current=%f\r\n", current);
+      current_int = (int)current;
+      //printf("current_int=%d\r\n", current_int);
+
+      memset(usart1_tx_buffer, 0x00, 48);
+
+      value2str_in_out((int)voltage_int, &value2str_vol[0]);
+      value2str_in_out((int)current_int, &value2str_cur[0]);
+      #endif
+      //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
     }
   }
   /* USER CODE END start_power_recv */
@@ -816,8 +810,8 @@ void _Error_Handler(char *file, int line)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
-{ 
+void assert_failed(uint8_t *file, uint32_t line)
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
