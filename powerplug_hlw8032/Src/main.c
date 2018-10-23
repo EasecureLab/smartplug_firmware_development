@@ -134,7 +134,7 @@ int net_state_machine = 0;
 _Bool net_sendcmd_noblock(char *cmd)
 {
   dma_send((unsigned char *)cmd, strlen((const char *)cmd));
-  printf("Sent:%s\r\n", cmd);
+  //printf("Sent:%s\r\n", cmd);
 }
 
 void value2str_in_out(int value, char *str)
