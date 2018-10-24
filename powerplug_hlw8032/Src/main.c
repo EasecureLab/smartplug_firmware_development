@@ -562,7 +562,7 @@ void start_sys_main(void const *argument)
     }
     if (net_state_machine == 8)
     {
-      memcpy(value2str_cur,"cur",3);
+      memcpy(value2str_cur, "cur", 3);
       dma_send(value2str_cur, 11);
     }
   }
@@ -654,6 +654,7 @@ void start_wifi_recv(void const *argument)
         {
           net_state_machine = 7;
           memset(usart3_tx_buffer, 0x00, 128);
+          osDelay(2000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
 
         }
@@ -678,6 +679,7 @@ void start_wifi_recv(void const *argument)
         {
           net_state_machine = 5;
           memset(usart3_tx_buffer, 0x00, 128);
+          osDelay(2000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
 
         }
