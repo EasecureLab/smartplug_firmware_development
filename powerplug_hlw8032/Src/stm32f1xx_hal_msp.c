@@ -344,18 +344,18 @@ void UsartReceive_IDLE(UART_HandleTypeDef *huart)
       /* clear buffer then receive again*/
       memset(usart3_rx_buffer, 0x00, 128);
       HAL_UART_Receive_DMA(huart, (uint8_t *)&usart3_rx_buffer, 128);
-    } 
+    }
   }
 }
 void dma_send(unsigned char *buffer, unsigned int length)
 {
-  
+
   while (HAL_DMA_GetState(&hdma_usart3_tx) == HAL_DMA_STATE_BUSY);
 
-  
+
   __HAL_DMA_DISABLE(&hdma_usart3_tx);
 
-  
+
   HAL_UART_Transmit_DMA(&huart3, buffer, length);
 }
 

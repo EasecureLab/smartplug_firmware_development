@@ -101,12 +101,12 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 
-uint32_t   voltage_parameter_value;
+uint32_t   voltage_par_value;
 uint32_t   voltage_reg_value;
-uint32_t   current_parameter_value;
+uint32_t   current_par_value;
 uint32_t   current_reg_value;
-uint32_t   power_parameter_value;
-uint32_t   power_reg_value;
+uint32_t   power_param_value;
+uint32_t   power_reges_value;
 float      voltage;
 uint32_t   voltage_int;
 float      current;
@@ -185,7 +185,31 @@ void value2str_in_out(int value, char *str)
   str[9] = ' ';
   str[10] = '\0';
 }
-
+void hlw8032_value_adjust(uint8_t *rx_src, uint8_t *rx_adjust)
+{
+  int rx_bf_index;
+  uint8_t rx_bf_temp_pre;
+  uint8_t rx_bf_temp_cur;
+  for (rx_bf_index = 0; rx_bf_index < 24; rx_bf_index++)
+  {
+    rx_bf_temp_cur = rx_src[rx_bf_index];
+    if (rx_bf_temp_cur == 0x55)
+    {
+      rx_bf_temp_pre = rx_bf_temp_cur;
+    }
+    else if (rx_bf_temp_cur == 0x5a)
+    {
+      if (rx_bf_temp_pre == 0x55)
+      {
+        if (rx_bf_index == 1)
+        {
+          memcpy(rx_adjust + 2, &rx_src[rx_bf_temp_cur + 2], 24 - (rx_bf_temp_cur - 1));
+          memcpy(rx_adjust + 2 + (24 - (rx_bf_temp_cur - 1)), &rx_src[0], rx_bf_temp_cur - 1);
+        }
+      }
+    }
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -532,6 +556,15 @@ void start_sys_main(void const *argument)
     {
       dma_send(value2str_vol, 11);
     }
+    if (net_state_machine == 7)
+    {
+      net_sendcmd_noblock("AT+CIPSEND=11\r\n");
+    }
+    if (net_state_machine == 8)
+    {
+      memcpy(value2str_cur,"cur",3);
+      dma_send(value2str_cur, 11);
+    }
   }
   /* USER CODE END 5 */
 }
@@ -619,6 +652,30 @@ void start_wifi_recv(void const *argument)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
+          net_state_machine = 7;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == 7)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 8;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == 8)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
           net_state_machine = 5;
           memset(usart3_tx_buffer, 0x00, 128);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
@@ -638,6 +695,8 @@ void start_power_recv(void const *argument)
 {
   /* USER CODE BEGIN start_power_recv */
   uint16_t count;
+  uint8_t rx_buff_temp[24];
+
   /* Infinite loop */
   for (;;)
   {
@@ -645,43 +704,31 @@ void start_power_recv(void const *argument)
     {
       count++;
       usart1_rx_flag = 0;
+      // 20*50=1000ms, 1s send the voltage and current data to usart
       if (count > 20)
       {
         count = 0;
         printf("voltage=%f\r\n", voltage);
         printf("current=%f\r\n", current);
       }
-      #if 1
-      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[0], usart1_rx_buffer[1], usart1_rx_buffer[2], usart1_rx_buffer[3], usart1_rx_buffer[4], usart1_rx_buffer[5]);
-      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[6], usart1_rx_buffer[7], usart1_rx_buffer[8], usart1_rx_buffer[9], usart1_rx_buffer[10], usart1_rx_buffer[11]);
-      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[12], usart1_rx_buffer[13], usart1_rx_buffer[14], usart1_rx_buffer[15], usart1_rx_buffer[16], usart1_rx_buffer[17]);
-      //printf("PowerPlug:%x %x %x %x %x %x \r\n", usart1_rx_buffer[18], usart1_rx_buffer[19], usart1_rx_buffer[20], usart1_rx_buffer[21], usart1_rx_buffer[22], usart1_rx_buffer[23]);
 
-      voltage_parameter_value = usart1_rx_buffer[2] * 65536 + usart1_rx_buffer[3] * 256 + usart1_rx_buffer[4];
-      voltage_reg_value = usart1_rx_buffer[5] * 65536 + usart1_rx_buffer[6] * 256 + usart1_rx_buffer[7];
-      current_parameter_value = usart1_rx_buffer[8] * 65536 + usart1_rx_buffer[9] * 256 + usart1_rx_buffer[10];
-      current_reg_value = usart1_rx_buffer[11] * 65536 + usart1_rx_buffer[12] * 256 + usart1_rx_buffer[13];
-      power_parameter_value = usart1_rx_buffer[14] * 65536 + usart1_rx_buffer[15] * 256 + usart1_rx_buffer[16];
-      power_reg_value = usart1_rx_buffer[17] * 65536 + usart1_rx_buffer[18] * 256 + usart1_rx_buffer[19];
+      // copy the data to the temp buffer
+      memcpy(rx_buff_temp, usart1_rx_buffer, 24);
 
-      //printf("voltage_parameter_value=%d,voltage_reg_value=%d\r\n", voltage_parameter_value, voltage_reg_value);
-      voltage = voltage_parameter_value / voltage_reg_value * 1.88;
-      //printf("voltage=%f\r\n", voltage);
+      voltage_par_value = rx_buff_temp[2] * 0xFFFF + rx_buff_temp[3] * 0xFF + rx_buff_temp[4];
+      voltage_reg_value = rx_buff_temp[5] * 0xFFFF + rx_buff_temp[6] * 0xFF + rx_buff_temp[7];
+      current_par_value = rx_buff_temp[8] * 0xFFFF + rx_buff_temp[9] * 0xFF + rx_buff_temp[10];
+      current_reg_value = rx_buff_temp[11] * 0xFFFF + rx_buff_temp[12] * 0xFF + rx_buff_temp[13];
+      power_param_value = rx_buff_temp[14] * 0xFFFF + rx_buff_temp[15] * 0xFF + rx_buff_temp[16];
+      power_reges_value = rx_buff_temp[17] * 0xFFFF + rx_buff_temp[18] * 0xFF + rx_buff_temp[19];
+      voltage = voltage_par_value / voltage_reg_value * 1.88;
       voltage_int = (int)voltage - 16;
-      //printf("voltage_int=%d\r\n", voltage_int);
-
-      //printf("current_parameter_value=%d,current_reg_value=%d\r\n", current_parameter_value, current_reg_value);
-      current = current_parameter_value / current_reg_value * 0.5;
-      //printf("current=%f\r\n", current);
+      current = current_par_value / current_reg_value * 0.5;
       current_int = (int)current;
-      //printf("current_int=%d\r\n", current_int);
-
-      memset(usart1_tx_buffer, 0x00, 48);
 
       value2str_in_out((int)voltage_int, &value2str_vol[0]);
       value2str_in_out((int)current_int, &value2str_cur[0]);
-      #endif
-      //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+
     }
   }
   /* USER CODE END start_power_recv */
