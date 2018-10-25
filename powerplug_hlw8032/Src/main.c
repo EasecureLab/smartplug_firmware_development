@@ -535,6 +535,8 @@ void start_sys_main(void const *argument)
     if (net_state_machine == 1)
     {
       net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
+      //net_sendcmd_noblock("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n");
+
     }
     if (net_state_machine == 2)
     {
@@ -564,6 +566,10 @@ void start_sys_main(void const *argument)
     {
       memcpy(value2str_cur, "cur", 3);
       dma_send(value2str_cur, 11);
+    }
+    if (net_state_machine == 9)
+    {
+      net_sendcmd_noblock("AT+CWJAP?\r\n");
     }
   }
   /* USER CODE END 5 */
@@ -677,9 +683,22 @@ void start_wifi_recv(void const *argument)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
-          net_state_machine = 5;
+          net_state_machine = 9;
           memset(usart3_tx_buffer, 0x00, 128);
           osDelay(2000);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == 9)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = 5;
+          memset(usart3_tx_buffer, 0x00, 128);
+          //osDelay(2000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
 
         }
@@ -724,7 +743,7 @@ void start_power_recv(void const *argument)
       power_param_value = rx_buff_temp[14] * 0xFFFF + rx_buff_temp[15] * 0xFF + rx_buff_temp[16];
       power_reges_value = rx_buff_temp[17] * 0xFFFF + rx_buff_temp[18] * 0xFF + rx_buff_temp[19];
       voltage = voltage_par_value / voltage_reg_value * 1.88;
-      voltage_int = (int)voltage - 16;
+      voltage_int = (int)voltage ;
       current = current_par_value / current_reg_value * 0.5;
       current_int = (int)current;
 
