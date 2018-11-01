@@ -794,7 +794,7 @@ void start_power_recv(void const *argument)
     {
 
       usart1_rx_flag = 0;
-
+      taskENTER_CRITICAL();
       // copy the data to the temp buffer
       memcpy(rx_buff_temp, usart1_rx_buffer, 24);
 
@@ -809,9 +809,10 @@ void start_power_recv(void const *argument)
       }
       memcpy(b, a + start_index, 24 - start_index);
       memcpy(b + start_index, a, start_index);
-	  memcpy(a,b,24);
-	  printf("convert:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
-	  
+      memcpy(a, b, 24);
+	  memcpy(rx_buff_temp,a,24);
+      printf("convert:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+      taskEXIT_CRITICAL();
 
       // 20*50=1000ms, 1s send the voltage and current data to usart
       voltage_par_value = rx_buff_temp[2] * 0xFFFF + rx_buff_temp[3] * 0xFF + rx_buff_temp[4];
