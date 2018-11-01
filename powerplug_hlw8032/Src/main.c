@@ -91,6 +91,21 @@ static void MX_NVIC_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+//net_state_machine
+typedef enum
+{
+  NET_STATE_MACHINE_CWMODE_DEF_1 = 0,
+  NET_STATE_MACHINE_CWJAP_DEF_1 = 1,
+  NET_STATE_MACHINE_CIPSTART_TCP_IP = 2,
+  NET_STATE_MACHINE_CIPSEND_7 = 3,
+  NET_STATE_MACHINE_CIPSEND_CONTENT_1 = 4,
+  NET_STATE_MACHINE_CIPSEND_11_1 = 5,
+  NET_STATE_MACHINE_CIPSEND_CONTENT_2 = 6,
+  NET_STATE_MACHINE_CIPSEND_11_2 = 7,
+  NET_STATE_MACHINE_CIPSEND_CONTENT_3 = 8,
+  NET_STATE_MACHINE_CWJAP_QUERY = 9,
+  NET_STATE_MACHINE_ = 255
+} net_state_machine_status;
 
 #define UART1_RX_LEN  24
 
@@ -133,6 +148,7 @@ int net_state_machine = 0;
 
 _Bool net_sendcmd_noblock(char *cmd)
 {
+  printf("Sent:%s\r\n", cmd);
   dma_send((unsigned char *)cmd, strlen((const char *)cmd));
   //printf("Sent:%s\r\n", cmd);
 }
@@ -528,46 +544,49 @@ void start_sys_main(void const *argument)
     osDelay(50);
     //wifi send function part
     osSemaphoreWait(sys_main_can_send_wifiHandle, osWaitForever);
-    if (net_state_machine == 0)
+    //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+    if (net_state_machine == NET_STATE_MACHINE_CWMODE_DEF_1)
     {
       net_sendcmd_noblock("AT+CWMODE_DEF=1\r\n");
     }
-    if (net_state_machine == 1)
+    if (net_state_machine == NET_STATE_MACHINE_CWJAP_DEF_1)
     {
       net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
       //net_sendcmd_noblock("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n");
 
     }
-    if (net_state_machine == 2)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSTART_TCP_IP)
     {
-      net_sendcmd_noblock("AT+CIPSTART=\"TCP\",\"132.232.89.145\",9999\r\n");
+      net_sendcmd_noblock("AT+CIPSTART=\"TCP\",\"120.78.149.124\",9999\r\n");
     }
-    if (net_state_machine == 3)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_7)
     {
       net_sendcmd_noblock("AT+CIPSEND=7\r\n");
     }
-    if (net_state_machine == 4)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_1)
     {
       net_sendcmd_noblock("hello\r\n");
     }
-    if (net_state_machine == 5)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_1)
     {
       net_sendcmd_noblock("AT+CIPSEND=11\r\n");
     }
-    if (net_state_machine == 6)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_2)
     {
+      printf("Send Data\r\n");
       dma_send(value2str_vol, 11);
     }
-    if (net_state_machine == 7)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_2)
     {
       net_sendcmd_noblock("AT+CIPSEND=11\r\n");
     }
-    if (net_state_machine == 8)
+    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_3)
     {
       memcpy(value2str_cur, "cur", 3);
+      printf("Send Data\r\n");
       dma_send(value2str_cur, 11);
     }
-    if (net_state_machine == 9)
+    if (net_state_machine == NET_STATE_MACHINE_CWJAP_QUERY)
     {
       net_sendcmd_noblock("AT+CWJAP?\r\n");
     }
@@ -586,7 +605,16 @@ void start_wifi_recv(void const *argument)
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
-      if (net_state_machine == 0)
+      //all the usart3 buffer should be checked firstly.
+      if (strstr(usart3_tx_buffer, "ERROR"))
+      {
+        net_state_machine = NET_STATE_MACHINE_CWMODE_DEF_1;
+        memset(usart3_tx_buffer, 0x00, 128);
+        osDelay(2000);
+        osSemaphoreRelease(sys_main_can_send_wifiHandle);
+      }
+      //net state machine switch
+      if (net_state_machine == NET_STATE_MACHINE_CWMODE_DEF_1)
       {
         net_state_machine = 1;
         printf("Received:%s\r\n", usart3_tx_buffer);
@@ -594,58 +622,67 @@ void start_wifi_recv(void const *argument)
         osDelay(2000);
         osSemaphoreRelease(sys_main_can_send_wifiHandle);
       }
-      else if (net_state_machine == 1)
+      else if (net_state_machine == NET_STATE_MACHINE_CWJAP_DEF_1)
       {
         net_state_machine = 1;
 
-        if (strstr(usart3_tx_buffer, "OK"))
+        if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "WIFI")))
         {
-          net_state_machine = 2;
+          net_state_machine = NET_STATE_MACHINE_CIPSTART_TCP_IP;
           memset(usart3_tx_buffer, 0x00, 128);
+          osDelay(4000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
         }
 
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
-      else if (net_state_machine == 2)
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSTART_TCP_IP)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
-          net_state_machine = 3;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_7;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
+        else  if ((strstr(usart3_tx_buffer, "ERROR")) || (strstr(usart3_tx_buffer, "link is not valid")))
+        {
+          printf("tcp connect error\r\n");
+          net_state_machine = NET_STATE_MACHINE_CWMODE_DEF_1;
+          memset(usart3_tx_buffer, 0x00, 128);
+          osDelay(2000);
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
+        printf("Received:%s\r\n", usart3_tx_buffer);
+        memset(usart3_tx_buffer, 0x00, 128);
+      }
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_7)
+      {
+        if (strstr(usart3_tx_buffer, "OK"))
+        {
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_CONTENT_1;
           memset(usart3_tx_buffer, 0x00, 128);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
         }
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
-      else if (net_state_machine == 3)
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_1)
       {
-        if (strstr(usart3_tx_buffer, "OK"))
+        if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
         {
-          net_state_machine = 4;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
           memset(usart3_tx_buffer, 0x00, 128);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
         }
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
-      else if (net_state_machine == 4)
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_1)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
-          net_state_machine = 5;
-          memset(usart3_tx_buffer, 0x00, 128);
-          osSemaphoreRelease(sys_main_can_send_wifiHandle);
-        }
-        printf("Received:%s\r\n", usart3_tx_buffer);
-        memset(usart3_tx_buffer, 0x00, 128);
-      }
-      else if (net_state_machine == 5)
-      {
-        if (strstr(usart3_tx_buffer, "OK"))
-        {
-          net_state_machine = 6;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_CONTENT_2;
           memset(usart3_tx_buffer, 0x00, 128);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
 
@@ -654,11 +691,11 @@ void start_wifi_recv(void const *argument)
         memset(usart3_tx_buffer, 0x00, 128);
 
       }
-      else if (net_state_machine == 6)
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_2)
       {
-        if (strstr(usart3_tx_buffer, "OK"))
+        if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
         {
-          net_state_machine = 7;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_2;
           memset(usart3_tx_buffer, 0x00, 128);
           osDelay(2000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
@@ -667,11 +704,11 @@ void start_wifi_recv(void const *argument)
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
-      else if (net_state_machine == 7)
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_2)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
-          net_state_machine = 8;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_CONTENT_3;
           memset(usart3_tx_buffer, 0x00, 128);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
 
@@ -679,11 +716,11 @@ void start_wifi_recv(void const *argument)
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
-      else if (net_state_machine == 8)
+      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_3)
       {
-        if (strstr(usart3_tx_buffer, "OK"))
+        if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
         {
-          net_state_machine = 9;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
           memset(usart3_tx_buffer, 0x00, 128);
           osDelay(2000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
@@ -692,11 +729,11 @@ void start_wifi_recv(void const *argument)
         printf("Received:%s\r\n", usart3_tx_buffer);
         memset(usart3_tx_buffer, 0x00, 128);
       }
-      else if (net_state_machine == 9)
+      else if (net_state_machine == NET_STATE_MACHINE_CWJAP_QUERY)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
-          net_state_machine = 5;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
           memset(usart3_tx_buffer, 0x00, 128);
           //osDelay(2000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
@@ -717,25 +754,66 @@ void start_power_recv(void const *argument)
   /* USER CODE BEGIN start_power_recv */
   uint16_t count;
   uint8_t rx_buff_temp[24];
-
+  uint8_t a[24];
+  uint8_t b[24];
+  int pre_net_state_machine;
+  int cur_net_state_machine;
+  int net_state_unchanged_count;
+  int i;
+  int start_index;
   /* Infinite loop */
   for (;;)
   {
+    osDelay(50);
+    count++;
+    if (count > 20)
+    {
+      count = 0;
+      printf("voltage=%f\r\n", voltage);
+      printf("current=%f\r\n", current);
+      printf("net_state_machine=%d\r\n", net_state_machine);
+      cur_net_state_machine = net_state_machine;
+      if (cur_net_state_machine == pre_net_state_machine)
+      {
+        net_state_unchanged_count++;
+      }
+      else
+      {
+        net_state_unchanged_count = 0;
+      }
+      if (net_state_unchanged_count > 5)
+      {
+        net_state_machine++;
+        osSemaphoreRelease(sys_main_can_send_wifiHandle);
+      }
+      pre_net_state_machine = cur_net_state_machine;
+      printf("cycle:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+    }
+
     if (usart1_rx_flag == 1)
     {
-      count++;
+
       usart1_rx_flag = 0;
-      // 20*50=1000ms, 1s send the voltage and current data to usart
-      if (count > 20)
-      {
-        count = 0;
-        printf("voltage=%f\r\n", voltage);
-        printf("current=%f\r\n", current);
-      }
 
       // copy the data to the temp buffer
       memcpy(rx_buff_temp, usart1_rx_buffer, 24);
 
+      memcpy(a, rx_buff_temp, 24);
+      //printf("%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+      for (i = 0; i < 24; i++)
+      {
+        if ((a[i] == 0x55) && (a[i] == 0x5a))
+        {
+          start_index = i;
+        }
+      }
+      memcpy(b, a + start_index, 24 - start_index);
+      memcpy(b + start_index, a, start_index);
+	  memcpy(a,b,24);
+	  printf("convert:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+	  
+
+      // 20*50=1000ms, 1s send the voltage and current data to usart
       voltage_par_value = rx_buff_temp[2] * 0xFFFF + rx_buff_temp[3] * 0xFF + rx_buff_temp[4];
       voltage_reg_value = rx_buff_temp[5] * 0xFFFF + rx_buff_temp[6] * 0xFF + rx_buff_temp[7];
       current_par_value = rx_buff_temp[8] * 0xFFFF + rx_buff_temp[9] * 0xFF + rx_buff_temp[10];
