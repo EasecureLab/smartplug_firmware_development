@@ -341,6 +341,21 @@ void UsartReceive_IDLE(UART_HandleTypeDef *huart)
         usart3_rx_flag = 1;
       }
 
+      // control the relay via the python socket
+      if (strstr(usart3_tx_buffer, ":on"))
+      {
+        printf("Init Received:%s\r\n", usart3_tx_buffer);
+        /*Configure GPIO pin Output Level */
+        HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_SET);
+      }
+      else if (strstr(usart3_tx_buffer, ":off"))
+      {
+        printf("Init Received:%s\r\n", usart3_tx_buffer);
+        /*Configure GPIO pin Output Level */
+        HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_RESET);
+
+      }
+
       /* clear buffer then receive again*/
       memset(usart3_rx_buffer, 0x00, 128);
       HAL_UART_Receive_DMA(huart, (uint8_t *)&usart3_rx_buffer, 128);

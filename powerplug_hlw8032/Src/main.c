@@ -406,10 +406,10 @@ void SystemClock_Config(void)
 static void MX_NVIC_Init(void)
 {
   /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(USART1_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USART3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART3_IRQn, 7, 0);
+  HAL_NVIC_SetPriority(USART3_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(USART3_IRQn);
 }
 
@@ -505,9 +505,9 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins as
-        * Analog
-        * Input
+/** Configure pins as 
+        * Analog 
+        * Input 
         * Output
         * EVENT_OUT
         * EXTI
@@ -539,7 +539,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART1)
   {
     usart1_rx_flag = 1;
-    HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+    //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
   }
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -562,6 +562,7 @@ void start_sys_main(void const *argument)
   for (;;)
   {
     osDelay(50);
+    HAL_IWDG_Refresh(&hiwdg);
     //wifi send function part
     osSemaphoreWait(sys_main_can_send_wifiHandle, osWaitForever);
     //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
@@ -625,6 +626,21 @@ void start_wifi_recv(void const *argument)
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
+      #if 0
+      printf("Init Received:%s\r\n", usart3_tx_buffer);
+      // control the relay via the python socket
+      if (strstr(usart3_tx_buffer, "action:on"))
+      {
+        /*Configure GPIO pin Output Level */
+        HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_SET);
+      }
+      else if (strstr(usart3_tx_buffer, "action:off"))
+      {
+        /*Configure GPIO pin Output Level */
+        HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_RESET);
+
+      }
+      #endif
       //all the usart3 buffer should be checked firstly.
       if (strstr(usart3_tx_buffer, "ERROR"))
       {
@@ -784,32 +800,9 @@ void start_power_recv(void const *argument)
   /* Infinite loop */
   for (;;)
   {
-    osDelay(50);
-	HAL_IWDG_Refresh(&hiwdg);
-    count++;
-    if (count > 20)
-    {
-      count = 0;
-      printf("voltage=%f\r\n", voltage);
-      printf("current=%f\r\n", current);
-      printf("net_state_machine=%d\r\n", net_state_machine);
-      cur_net_state_machine = net_state_machine;
-      if (cur_net_state_machine == pre_net_state_machine)
-      {
-        net_state_unchanged_count++;
-      }
-      else
-      {
-        net_state_unchanged_count = 0;
-      }
-      if (net_state_unchanged_count > 5)
-      {
-        net_state_machine++;
-        osSemaphoreRelease(sys_main_can_send_wifiHandle);
-      }
-      pre_net_state_machine = cur_net_state_machine;
-      printf("cycle:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
-    }
+    //osDelay(50);
+    HAL_IWDG_Refresh(&hiwdg);
+
 
     if (usart1_rx_flag == 1)
     {
@@ -826,14 +819,44 @@ void start_power_recv(void const *argument)
         if ((a[i] == 0x55) && (a[i] == 0x5a))
         {
           start_index = i;
+          printf("i=%d\r\n", i);
         }
       }
       memcpy(b, a + start_index, 24 - start_index);
       memcpy(b + start_index, a, start_index);
       memcpy(a, b, 24);
-	  memcpy(rx_buff_temp,a,24);
-      printf("convert:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+      memcpy(rx_buff_temp, a, 24);
+      //printf("a[0]=%x\r\n", a[0]);
+      osDelay(50);
+      //printf("convert:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
       taskEXIT_CRITICAL();
+	  //osDelay(100);
+      HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
+
+      count++;
+      if (count > 20)
+      {
+        count = 0;
+        printf("voltage=%f\r\n", voltage);
+        printf("current=%f\r\n", current);
+        printf("net_state_machine=%d\r\n", net_state_machine);
+        cur_net_state_machine = net_state_machine;
+        if (cur_net_state_machine == pre_net_state_machine)
+        {
+          net_state_unchanged_count++;
+        }
+        else
+        {
+          net_state_unchanged_count = 0;
+        }
+        if (net_state_unchanged_count > 5)
+        {
+          net_state_machine++;
+          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+        }
+        pre_net_state_machine = cur_net_state_machine;
+        printf("cycle:%x %x %x %x %x %x %x %x %x %x	 %x %x %x %x %x %x %x %x %x %x	 %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+      }
 
       // 20*50=1000ms, 1s send the voltage and current data to usart
       voltage_par_value = rx_buff_temp[2] * 0xFFFF + rx_buff_temp[3] * 0xFF + rx_buff_temp[4];
