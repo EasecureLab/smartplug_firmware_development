@@ -1,4 +1,40 @@
----- power_reg_value Matches (3 in 1 files) ----
-Main.c (src):uint32_t   power_reg_value;
-Main.c (src):      power_reg_value = usart1_rx_buffer[17] * 65536 + usart1_rx_buffer[18] * 256 + usart1_rx_buffer[19];
-Main.c (src):      power_reg_value = rx_buff_temp[17] * 0xFFFF + rx_buff_temp[18] * 0xFF + rx_buff_temp[19];
+---- net_state_machine Matches (40 in 1 files) ----
+Main.c (src)://net_state_machine
+Main.c (src):int net_state_machine = 0;
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CWMODE_DEF_1)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CWJAP_DEF_1)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSTART_TCP_IP)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_7)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_1)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_1)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_2)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_2)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_3)
+Main.c (src):    if (net_state_machine == NET_STATE_MACHINE_CWJAP_QUERY)
+Main.c (src):        net_state_machine = NET_STATE_MACHINE_CWMODE_DEF_1;
+Main.c (src):      if (net_state_machine == NET_STATE_MACHINE_CWMODE_DEF_1)
+Main.c (src):        net_state_machine = 1;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CWJAP_DEF_1)
+Main.c (src):        net_state_machine = 1;
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSTART_TCP_IP;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSTART_TCP_IP)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CWMODE_DEF_1;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_7)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_CONTENT_1;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_1)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_1)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_CONTENT_2;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_2)
+Main.c (src):          //net_state_machine = NET_STATE_MACHINE_CIPSEND_11_2;
+Main.c (src):		  net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_2)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_CONTENT_3;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_3)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
+Main.c (src):      else if (net_state_machine == NET_STATE_MACHINE_CWJAP_QUERY)
+Main.c (src):          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
+Main.c (src):        //printf("net_state_machine=%d\r\n", net_state_machine);
+Main.c (src):        cur_net_state_machine = net_state_machine;
+Main.c (src):          net_state_machine++;

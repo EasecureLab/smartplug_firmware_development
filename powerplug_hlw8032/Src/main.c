@@ -83,9 +83,9 @@ static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_IWDG_Init(void);
-void start_sys_main(void const * argument);
-void start_wifi_recv(void const * argument);
-void start_power_recv(void const * argument);
+void start_sys_main(void const *argument);
+void start_wifi_recv(void const *argument);
+void start_power_recv(void const *argument);
 static void MX_NVIC_Init(void);
 
 /* USER CODE BEGIN PFP */
@@ -144,7 +144,7 @@ char thousand_char;
 char hundred_char;
 char deci_char;
 char last_char;
-char value2str[11];
+char value2str_vol_cur[20];
 char value2str_vol[11];
 char value2str_cur[11];
 int net_state_machine = 0;
@@ -200,7 +200,7 @@ void value2str_in_out(int value, char *str)
   str[5] = hundred_char;
   str[6] = deci_char;
   str[7] = last_char;
-  str[8] = ' ';
+  str[8] = ',';
   str[9] = ' ';
   str[10] = '\0';
 }
@@ -361,9 +361,9 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+  /**Initializes the CPU, AHB and APB busses clocks
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = 16;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
@@ -373,10 +373,10 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  /**Initializes the CPU, AHB and APB busses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -505,9 +505,9 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
+/** Configure pins as
+        * Analog
+        * Input
         * Output
         * EVENT_OUT
         * EXTI
@@ -539,7 +539,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART1)
   {
     usart1_rx_flag = 1;
-    //HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
   }
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -590,21 +589,25 @@ void start_sys_main(void const *argument)
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_1)
     {
-      net_sendcmd_noblock("AT+CIPSEND=11\r\n");
+      //net_sendcmd_noblock("AT+CIPSEND=11\r\n");
+      //value2str_vol_cur
+      net_sendcmd_noblock("AT+CIPSEND=20\r\n");
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_2)
     {
-      printf("Send Data\r\n");
-      dma_send(value2str_vol, 11);
+      //printf("Send Data\r\n");
+      //dma_send(value2str_vol, 11);
+      dma_send(value2str_vol_cur, 20);
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_2)
     {
+      printf("why?");
       net_sendcmd_noblock("AT+CIPSEND=11\r\n");
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_3)
     {
       memcpy(value2str_cur, "cur", 3);
-      printf("Send Data\r\n");
+      //printf("Send Data\r\n");
       dma_send(value2str_cur, 11);
     }
     if (net_state_machine == NET_STATE_MACHINE_CWJAP_QUERY)
@@ -626,21 +629,7 @@ void start_wifi_recv(void const *argument)
     if (usart3_rx_flag == 1)
     {
       usart3_rx_flag = 0;
-      #if 0
-      printf("Init Received:%s\r\n", usart3_tx_buffer);
-      // control the relay via the python socket
-      if (strstr(usart3_tx_buffer, "action:on"))
-      {
-        /*Configure GPIO pin Output Level */
-        HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_SET);
-      }
-      else if (strstr(usart3_tx_buffer, "action:off"))
-      {
-        /*Configure GPIO pin Output Level */
-        HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_RESET);
 
-      }
-      #endif
       //all the usart3 buffer should be checked firstly.
       if (strstr(usart3_tx_buffer, "ERROR"))
       {
@@ -677,7 +666,7 @@ void start_wifi_recv(void const *argument)
       {
         if (strstr(usart3_tx_buffer, "OK"))
         {
-          net_state_machine = NET_STATE_MACHINE_CIPSEND_7;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
           memset(usart3_tx_buffer, 0x00, 128);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
         }
@@ -731,9 +720,10 @@ void start_wifi_recv(void const *argument)
       {
         if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
         {
-          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_2;
+          //net_state_machine = NET_STATE_MACHINE_CIPSEND_11_2;
+          net_state_machine = NET_STATE_MACHINE_CIPSEND_11_1;
           memset(usart3_tx_buffer, 0x00, 128);
-          osDelay(2000);
+          osDelay(1000);
           osSemaphoreRelease(sys_main_can_send_wifiHandle);
 
         }
@@ -797,48 +787,38 @@ void start_power_recv(void const *argument)
   int net_state_unchanged_count;
   int i;
   int start_index;
+  static uint8_t send_semp_flag;
   /* Infinite loop */
   for (;;)
   {
-    //osDelay(50);
     HAL_IWDG_Refresh(&hiwdg);
-
 
     if (usart1_rx_flag == 1)
     {
-
       usart1_rx_flag = 0;
-      taskENTER_CRITICAL();
-      // copy the data to the temp buffer
-      memcpy(rx_buff_temp, usart1_rx_buffer, 24);
 
-      memcpy(a, rx_buff_temp, 24);
-      //printf("%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+      // copy the data to the temp buffer
+      taskENTER_CRITICAL();
+      memcpy(a, usart1_rx_buffer, 24);
+
       for (i = 0; i < 24; i++)
       {
-        if ((a[i] == 0x55) && (a[i] == 0x5a))
+        if ((a[i] == 0x55) && (a[i + 1] == 0x5a))
         {
           start_index = i;
-          printf("i=%d\r\n", i);
         }
       }
       memcpy(b, a + start_index, 24 - start_index);
       memcpy(b + start_index, a, start_index);
       memcpy(a, b, 24);
       memcpy(rx_buff_temp, a, 24);
-      //printf("a[0]=%x\r\n", a[0]);
-      osDelay(50);
-      //printf("convert:%x %x %x %x %x %x %x %x %x %x   %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
       taskEXIT_CRITICAL();
-	  //osDelay(100);
-      HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
-
       count++;
-      if (count > 20)
+      if (count > 10)
       {
         count = 0;
-        printf("voltage=%f\r\n", voltage);
-        printf("current=%f\r\n", current);
+        //printf("voltage=%f\r\n", voltage);
+        //printf("current=%f\r\n", current);
         printf("net_state_machine=%d\r\n", net_state_machine);
         cur_net_state_machine = net_state_machine;
         if (cur_net_state_machine == pre_net_state_machine)
@@ -849,30 +829,65 @@ void start_power_recv(void const *argument)
         {
           net_state_unchanged_count = 0;
         }
+
+        pre_net_state_machine = cur_net_state_machine;
+        printf("cycle:%x %x %x %x %x %x %x %x %x %x  %x %x %x %x %x %x %x %x %x %x   %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+        //printf("net_state_unchanged_count=%d\r\n", net_state_unchanged_count);
+
         if (net_state_unchanged_count > 5)
         {
-          net_state_machine++;
-          osSemaphoreRelease(sys_main_can_send_wifiHandle);
+          if (net_state_machine <= 5)
+          {
+            net_state_machine++;
+            if (net_state_machine == 6)
+            {
+              net_state_machine = 5;
+            }
+
+          }
+          if (net_state_machine == 6)
+          {
+            net_state_machine = 5;
+          }
+          //osSemaphoreRelease(sys_main_can_send_wifiHandle);
+          send_semp_flag = 1;
         }
-        pre_net_state_machine = cur_net_state_machine;
-        printf("cycle:%x %x %x %x %x %x %x %x %x %x	 %x %x %x %x %x %x %x %x %x %x	 %x %x %x %x \r\n", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23]);
+
+      }
+      if (rx_buff_temp[0] == 0x55 && rx_buff_temp[1] == 0x5a && rx_buff_temp[2] == 0x02 && rx_buff_temp[3] == 0xe3)
+      {
+        // 20*50=1000ms, 1s send the voltage and current data to usart
+        voltage_par_value = rx_buff_temp[2] * 0xFFFF + rx_buff_temp[3] * 0xFF + rx_buff_temp[4];
+        voltage_reg_value = rx_buff_temp[5] * 0xFFFF + rx_buff_temp[6] * 0xFF + rx_buff_temp[7];
+        current_par_value = rx_buff_temp[8] * 0xFFFF + rx_buff_temp[9] * 0xFF + rx_buff_temp[10];
+        current_reg_value = rx_buff_temp[11] * 0xFFFF + rx_buff_temp[12] * 0xFF + rx_buff_temp[13];
+        power_param_value = rx_buff_temp[14] * 0xFFFF + rx_buff_temp[15] * 0xFF + rx_buff_temp[16];
+        power_reges_value = rx_buff_temp[17] * 0xFFFF + rx_buff_temp[18] * 0xFF + rx_buff_temp[19];
+        voltage = voltage_par_value / voltage_reg_value * 1.88;
+        voltage_int = (int)voltage ;
+        current = current_par_value / current_reg_value * 0.5;
+        current_int = (int)current;
+
+        value2str_in_out((int)voltage_int, &value2str_vol[0]);
+        value2str_in_out((int)current_int, &value2str_cur[0]);
+        //string cat together
+        memcpy(value2str_vol_cur, value2str_vol, 9);
+        memcpy(value2str_vol_cur + 9, value2str_cur, 8);
+        value2str_vol_cur[19] = '\0';
+
       }
 
-      // 20*50=1000ms, 1s send the voltage and current data to usart
-      voltage_par_value = rx_buff_temp[2] * 0xFFFF + rx_buff_temp[3] * 0xFF + rx_buff_temp[4];
-      voltage_reg_value = rx_buff_temp[5] * 0xFFFF + rx_buff_temp[6] * 0xFF + rx_buff_temp[7];
-      current_par_value = rx_buff_temp[8] * 0xFFFF + rx_buff_temp[9] * 0xFF + rx_buff_temp[10];
-      current_reg_value = rx_buff_temp[11] * 0xFFFF + rx_buff_temp[12] * 0xFF + rx_buff_temp[13];
-      power_param_value = rx_buff_temp[14] * 0xFFFF + rx_buff_temp[15] * 0xFF + rx_buff_temp[16];
-      power_reges_value = rx_buff_temp[17] * 0xFFFF + rx_buff_temp[18] * 0xFF + rx_buff_temp[19];
-      voltage = voltage_par_value / voltage_reg_value * 1.88;
-      voltage_int = (int)voltage ;
-      current = current_par_value / current_reg_value * 0.5;
-      current_int = (int)current;
 
-      value2str_in_out((int)voltage_int, &value2str_vol[0]);
-      value2str_in_out((int)current_int, &value2str_cur[0]);
+      if (send_semp_flag == 1)
+      {
+        send_semp_flag = 0;
+        osSemaphoreRelease(sys_main_can_send_wifiHandle);
+      }
 
+
+      osDelay(100);
+      //if(count%2==0)
+      HAL_UART_Receive_IT(&huart1, usart1_rx_buffer, UART1_RX_LEN);
     }
   }
   /* USER CODE END start_power_recv */

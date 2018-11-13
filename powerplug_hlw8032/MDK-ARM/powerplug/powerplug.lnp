@@ -5,6 +5,7 @@
 "powerplug\stm32f1xx_it.o"
 "powerplug\stm32f1xx_hal_msp.o"
 "powerplug\stm32f1xx_hal_gpio_ex.o"
+"powerplug\stm32f1xx_hal_iwdg.o"
 "powerplug\stm32f1xx_hal_tim.o"
 "powerplug\stm32f1xx_hal_tim_ex.o"
 "powerplug\stm32f1xx_hal_uart.o"
