@@ -129,6 +129,9 @@ float      voltage;
 uint32_t   voltage_int;
 float      current;
 uint32_t   current_int;
+float      power;
+uint32_t   power_int;
+
 
 uint8_t    usart3_rx_flag = 0;
 uint8_t    usart3_rx_buffer[128];
@@ -147,6 +150,8 @@ char last_char;
 char value2str_vol_cur[20];
 char value2str_vol[11];
 char value2str_cur[11];
+char value2str_pwr[11];
+char relay_state[11];
 int net_state_machine = 0;
 
 _Bool net_sendcmd_noblock(char *cmd)
@@ -204,6 +209,105 @@ void value2str_in_out(int value, char *str)
   str[9] = ' ';
   str[10] = '\0';
 }
+void cur_value2str_in_out(int value, char *str)
+{
+  int temp_value;
+
+  if (value / 10000 != 0)
+  {
+    return ;
+  }
+  else if (value / 10000 == 0) //below 10000
+  {
+    thousand_char = value / 1000 + 0x30; //thousand
+    temp_value = value % 1000; // hundred deci etc
+
+    if (temp_value / 100 != 0)
+    {
+      hundred_char = temp_value / 100 + 0x30;
+    }
+    else if (temp_value / 100 == 0)
+    {
+      hundred_char = 0x30;
+    }
+    temp_value = value % 100; //deci etc;
+
+    if (temp_value / 10 != 0)
+    {
+      deci_char = temp_value / 10 + 0x30;
+    }
+    else if (temp_value / 10 == 0)
+    {
+      deci_char = 0x30;
+    }
+    last_char = value % 10 + 0x30;
+  }
+
+
+  str[0] = 'c';
+  str[1] = 'u';
+  str[2] = 'r';
+  str[3]  = ':';
+
+  str[4] = thousand_char;
+  str[5] = hundred_char;
+  str[6] = deci_char;
+  str[7] = last_char;
+  str[8] = ',';
+  str[9] = ' ';
+  str[10] = '\0';
+}
+
+void pwr_value2str_in_out(int value, char *str)
+{
+  int temp_value;
+
+  if (value / 10000 != 0)
+  {
+    return ;
+  }
+  else if (value / 10000 == 0) //below 10000
+  {
+    thousand_char = value / 1000 + 0x30; //thousand
+    temp_value = value % 1000; // hundred deci etc
+
+    if (temp_value / 100 != 0)
+    {
+      hundred_char = temp_value / 100 + 0x30;
+    }
+    else if (temp_value / 100 == 0)
+    {
+      hundred_char = 0x30;
+    }
+    temp_value = value % 100; //deci etc;
+
+    if (temp_value / 10 != 0)
+    {
+      deci_char = temp_value / 10 + 0x30;
+    }
+    else if (temp_value / 10 == 0)
+    {
+      deci_char = 0x30;
+    }
+    last_char = value % 10 + 0x30;
+  }
+
+
+  str[0] = 'p';
+  str[1] = 'w';
+  str[2] = 'r';
+  str[3]  = ':';
+
+  str[4] = thousand_char;
+  str[5] = hundred_char;
+  str[6] = deci_char;
+  str[7] = last_char;
+  str[8] = ',';
+  str[9] = ' ';
+  str[10] = '\0';
+}
+
+
 void hlw8032_value_adjust(uint8_t *rx_src, uint8_t *rx_adjust)
 {
   int rx_bf_index;
@@ -571,8 +675,8 @@ void start_sys_main(void const *argument)
     }
     if (net_state_machine == NET_STATE_MACHINE_CWJAP_DEF_1)
     {
-      net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
-      //net_sendcmd_noblock("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n");
+      //net_sendcmd_noblock("AT+CWJAP_DEF=\"wsn405\",\"wsn405405\"\r\n");
+      net_sendcmd_noblock("AT+CWJAP_DEF=\"davwang\",\"15908106107\"\r\n");
 
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSTART_TCP_IP)
@@ -591,13 +695,15 @@ void start_sys_main(void const *argument)
     {
       //net_sendcmd_noblock("AT+CIPSEND=11\r\n");
       //value2str_vol_cur
-      net_sendcmd_noblock("AT+CIPSEND=20\r\n");
+      //net_sendcmd_noblock("AT+CIPSEND=20\r\n");
+      net_sendcmd_noblock("AT+CIPSEND=37\r\n");
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSEND_CONTENT_2)
     {
       //printf("Send Data\r\n");
       //dma_send(value2str_vol, 11);
-      dma_send(value2str_vol_cur, 20);
+      //dma_send(value2str_vol_cur, 20);
+      dma_send(value2str_vol_cur, 37);
     }
     if (net_state_machine == NET_STATE_MACHINE_CIPSEND_11_2)
     {
@@ -867,13 +973,22 @@ void start_power_recv(void const *argument)
         voltage_int = (int)voltage ;
         current = current_par_value / current_reg_value * 0.5;
         current_int = (int)current;
+        power = power_param_value / power_reges_value * 1.88 * 0.5;
+        power_int = (int)power;
 
         value2str_in_out((int)voltage_int, &value2str_vol[0]);
-        value2str_in_out((int)current_int, &value2str_cur[0]);
+        cur_value2str_in_out((int)current_int, &value2str_cur[0]);
+        pwr_value2str_in_out((int)power_int, &value2str_pwr[0]);
+
         //string cat together
         memcpy(value2str_vol_cur, value2str_vol, 9);
-        memcpy(value2str_vol_cur + 9, value2str_cur, 8);
-        value2str_vol_cur[19] = '\0';
+        memcpy(value2str_vol_cur + 9, value2str_cur, 9);
+        memcpy(value2str_vol_cur + 18, value2str_pwr, 9);
+        //
+        memcpy(relay_state, "rely:off", 8);
+        memcpy(value2str_vol_cur + 27, relay_state, 9);
+
+        value2str_vol_cur[36] = '\0';
 
       }
 
