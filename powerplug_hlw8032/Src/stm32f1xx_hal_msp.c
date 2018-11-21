@@ -72,6 +72,8 @@ extern uint8_t  usart1_rx_buffer[48];
 extern uint8_t  usart1_tx_buffer[48];
 extern uint16_t usart1_tx_len;
 
+extern int rely_state;
+
 /* USER CODE END 0 */
 /**
   * Initializes the Global MSP.
@@ -345,12 +347,14 @@ void UsartReceive_IDLE(UART_HandleTypeDef *huart)
       if (strstr(usart3_tx_buffer, ":on"))
       {
         printf("Init Received:%s\r\n", usart3_tx_buffer);
+        rely_state = 1;
         /*Configure GPIO pin Output Level */
         HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_SET);
       }
       else if (strstr(usart3_tx_buffer, ":off"))
       {
         printf("Init Received:%s\r\n", usart3_tx_buffer);
+        rely_state = 0;
         /*Configure GPIO pin Output Level */
         HAL_GPIO_WritePin(CTL_Pin_GPIO_Port, CTL_Pin_Pin, GPIO_PIN_RESET);
 

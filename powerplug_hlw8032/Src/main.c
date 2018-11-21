@@ -153,6 +153,7 @@ char value2str_cur[11];
 char value2str_pwr[11];
 char relay_state[11];
 int net_state_machine = 0;
+int rely_state = 0;
 
 _Bool net_sendcmd_noblock(char *cmd)
 {
@@ -985,7 +986,14 @@ void start_power_recv(void const *argument)
         memcpy(value2str_vol_cur + 9, value2str_cur, 9);
         memcpy(value2str_vol_cur + 18, value2str_pwr, 9);
         //
-        memcpy(relay_state, "rely:off", 8);
+        if (rely_state == 0)
+        {
+          memcpy(relay_state, "rely:off", 8);
+        }
+        else if (rely_state == 1)
+        {
+          memcpy(relay_state, "rely:on ", 8);
+        }
         memcpy(value2str_vol_cur + 27, relay_state, 9);
 
         value2str_vol_cur[36] = '\0';

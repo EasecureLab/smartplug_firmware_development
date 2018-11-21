@@ -21,16 +21,132 @@ Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.1.0
 Dialog DLL:      TCM.DLL V1.32.0.0
  
 <h2>Project:</h2>
-C:\Users\dav\Desktop\davwang\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\MDK-ARM\powerplug.uvprojx
-Project File Date:  11/13/2018
+D:\smartplug_firmware_stm32_hlw8012\powerplug_hlw8032\MDK-ARM\powerplug.uvprojx
+Project File Date:  11/21/2018
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'powerplug'
+compiling freertos.c...
+compiling stm32f1xx_it.c...
+compiling main.c...
+../Src/main.c(161): warning:  #223-D: function "dma_send" declared implicitly
+    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+../Src/main.c(161): warning:  #223-D: function "strlen" declared implicitly
+    dma_send((unsigned char *)cmd, strlen((const char *)cmd));
+../Src/main.c(163): warning:  #940-D: missing return statement at end of non-void function "net_sendcmd_noblock" 
+  }
+../Src/main.c(330): warning:  #223-D: function "memcpy" declared implicitly
+            memcpy(rx_adjust + 2, &rx_src[rx_bf_temp_cur + 2], 24 - (rx_bf_temp_cur - 1));
+../Src/main.c(707): warning:  #223-D: function "dma_send" declared implicitly
+        dma_send(value2str_vol_cur, 37);
+../Src/main.c(716): warning:  #223-D: function "memcpy" declared implicitly
+        memcpy(value2str_cur, "cur", 3);
+../Src/main.c(718): warning:  #223-D: function "dma_send" declared implicitly
+        dma_send(value2str_cur, 11);
+../Src/main.c(741): warning:  #223-D: function "strstr" declared implicitly
+        if (strstr(usart3_tx_buffer, "ERROR"))
+../Src/main.c(744): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(753): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(761): warning:  #223-D: function "strstr" declared implicitly
+          if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "WIFI")))
+../Src/main.c(764): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(770): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(774): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(777): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(784): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(789): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(793): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(796): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(800): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(804): warning:  #223-D: function "strstr" declared implicitly
+          if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
+../Src/main.c(807): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(811): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(815): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(818): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(823): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(828): warning:  #223-D: function "strstr" declared implicitly
+          if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
+../Src/main.c(832): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(838): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(842): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(845): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(850): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(854): warning:  #223-D: function "strstr" declared implicitly
+          if ((strstr(usart3_tx_buffer, "OK")) || (strstr(usart3_tx_buffer, "Recv")))
+../Src/main.c(857): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(863): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(867): warning:  #223-D: function "strstr" declared implicitly
+          if (strstr(usart3_tx_buffer, "OK"))
+../Src/main.c(870): warning:  #223-D: function "memset" declared implicitly
+            memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(876): warning:  #223-D: function "memset" declared implicitly
+          memset(usart3_tx_buffer, 0x00, 128);
+../Src/main.c(909): warning:  #223-D: function "memcpy" declared implicitly
+        memcpy(a, usart1_rx_buffer, 24);
+../Src/main.c(997): warning:  #170-D: pointer points outside of underlying object
+          memcpy(value2str_vol_cur + 27, relay_state, 9);
+../Src/main.c(999): warning:  #175-D: subscript out of range
+          value2str_vol_cur[36] = '\0';
+../Src/main.c: 41 warnings, 0 errors
+compiling stm32f1xx_hal_msp.c...
+../Src/stm32f1xx_hal_msp.c(347): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "const char *"
+        if (strstr(usart3_tx_buffer, ":on"))
+../Src/stm32f1xx_hal_msp.c(354): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "const char *"
+        else if (strstr(usart3_tx_buffer, ":off"))
+../Src/stm32f1xx_hal_msp.c: 2 warnings, 0 errors
+compiling stm32f1xx_hal_gpio_ex.c...
+compiling stm32f1xx_hal_iwdg.c...
+compiling stm32f1xx_hal_tim.c...
+compiling stm32f1xx_hal_tim_ex.c...
+compiling stm32f1xx_hal_uart.c...
+compiling stm32f1xx_hal.c...
+compiling stm32f1xx_hal_rcc.c...
+compiling stm32f1xx_hal_rcc_ex.c...
+compiling stm32f1xx_hal_gpio.c...
+compiling stm32f1xx_hal_dma.c...
+compiling stm32f1xx_hal_cortex.c...
+compiling stm32f1xx_hal_flash.c...
+compiling stm32f1xx_hal_pwr.c...
+compiling heap_4.c...
+compiling stm32f1xx_hal_flash_ex.c...
+compiling system_stm32f1xx.c...
+compiling port.c...
+compiling croutine.c...
+compiling list.c...
+compiling event_groups.c...
+compiling queue.c...
+compiling timers.c...
+compiling tasks.c...
+compiling cmsis_os.c...
 linking...
-Program Size: Code=15512 RO-data=484 RW-data=188 ZI-data=5092  
+Program Size: Code=16008 RO-data=484 RW-data=200 ZI-data=5112  
 FromELF: creating hex file...
-"powerplug\powerplug.axf" - 0 Error(s), 0 Warning(s).
+"powerplug\powerplug.axf" - 0 Error(s), 43 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -53,7 +169,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.1.1
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:18
 </pre>
 </body>
 </html>

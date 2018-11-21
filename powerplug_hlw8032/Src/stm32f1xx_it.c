@@ -38,6 +38,7 @@
 
 /* USER CODE BEGIN 0 */
 extern void UsartReceive_IDLE(UART_HandleTypeDef *huart);
+extern int rely_state;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
